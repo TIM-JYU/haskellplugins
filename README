@@ -7,7 +7,7 @@ komento on `git subtree pull --prefix=timApp/modules/Haskell/Choices --squash gi
 
 ## Tiedostot
 
-Olennaiset kooditiedostot
+Olennaiset kooditiedostot (Monivalintojen kannalta)
 
 * `ChoicesPlugin.hs`    -- Varsinainen plugin (yksöisvalinta). Tämä tiedosto kääntyy plugin-web-palvelimeksi.
 * `MultipleChoicesPlugin.hss` - Varsinainen plugin (monivalinta). Tämä tiedosto kääntyy plugin-web-palvelimeksi.
@@ -39,3 +39,8 @@ Plugin on yritetty koota siten, että sitä voi testata ilman TIM:iä. Sen pitä
 
 Ja sitten selaimella localhost:8080/index.html esiin.
 
+
+# TODO:
+
+* Tän tiedoston päivitys
+* Graphviz yms. pluginien erottaminen erilleen.

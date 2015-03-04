@@ -5,10 +5,6 @@ komento on `git subtree pull --prefix=timApp/modules/Haskell/Choices --squash gi
 
 # Prototyyppi monivalintapluginista
 
-## Tila
-
-Testattu ilman TIMiä, siistimättä.
-
 ## Tiedostot
 
 Olennaiset kooditiedostot

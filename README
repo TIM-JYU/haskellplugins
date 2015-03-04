@@ -9,13 +9,8 @@ komento on `git subtree pull --prefix=timApp/modules/Haskell/Choices --squash gi
 
 Olennaiset kooditiedostot
 
-* `ChoicesPlugin.hs`    -- Varsinainen plugin. Tämä tiedosto kääntyy plugin-web-palvelimeksi.
-* `PluginType.hs`       -- Pluginrajapinta. Tämä hoitaa web-palvelun muodostamisen ja 
-                           eri pyyntöjen serialisoimisen sekä kommunikaation.
-* `HTMLRequest.hs`      -- Tietotyypp `/html` reitin pyyntöjä varten.
-* `AnswerRequest.hs`    -- Tietotyyppi `/answer` reitin pyyntöjä varten.
-* `UtilityPrelude.hs`   -- Lista moduleja, jotka importataan käytännössä aina. Ei tarvitse 
-                           jokaista tiedostoa liata niillä.
+* `ChoicesPlugin.hs`    -- Varsinainen plugin (yksöisvalinta). Tämä tiedosto kääntyy plugin-web-palvelimeksi.
+* `MultipleChoicesPlugin.hss` - Varsinainen plugin (monivalinta). Tämä tiedosto kääntyy plugin-web-palvelimeksi.
 * `MCQTemplate.html`    -- Angularin html-template tiedosto monivalintatehtävää varten
 * `script.js`           -- Monivalintatehtävän asiakaslogiikka. Toteuttaa angular modulin `mcq`,
                            joka pitää löytyä siis sivun dependensseistä.

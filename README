@@ -3,13 +3,14 @@
 Tämä plugin on nykyisin git-subtree. Jos haluatte päivittää sitä niin
 komento on 
 
-    git pull -s subtree git@yousource.it.jyu.fi:ties343-funktio-ohjelmointi/MultipleChoicePlugin.git master
+   git subtree pull --prefix=Choices/ git@yousource.it.jyu.fi:ties343-funktio-ohjelmointi/MultipleChoicePlugin.git master 
 
 Vai onko?
 
     git fetch choices
     git merge -s subtree choices/master
 
+parempi?
 
     
 # Prototyyppi monivalintapluginista

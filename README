@@ -4,6 +4,8 @@ Tämä plugin on nykyisin git-subtree. Jos haluatte päivittää sitä niin
 komento on 
 
     git pull -s subtree git@yousource.it.jyu.fi:ties343-funktio-ohjelmointi/MultipleChoicePlugin.git master
+
+Vai onko?
     
 # Prototyyppi monivalintapluginista
 

@@ -3,7 +3,6 @@ function standardDirective(template,build,extract) {
     return {
       restrict: 'E',
       templateUrl: function(elem,attrs) {
-                    // return "http://"+elem.parent().attr('data-plugin')+"/"+template;
                     return elem.parent().attr('data-plugin')+"/"+template;
                    }, 
       replace: true,
@@ -22,7 +21,6 @@ function standardDirective(template,build,extract) {
             if (localMarkup!==null) {message.markup = localMarkup};
             $http({method:'PUT'
                   ,url:$scope.plugin+"/"+$scope.ident+"/answer/"
-                  //,url:"http://"+$scope.plugin+"/"+$scope.ident+"/answer/" 
                   ,data:message})
              .success(function(data){
                   $scope.content = data.web

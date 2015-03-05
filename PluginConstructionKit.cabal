@@ -29,6 +29,6 @@ Library
       , unordered-containers >= 0.2.4
       , directory >= 1.2
       , either >= 4.3
-  exposed-modules: PluginType, UtilityPrelude
+  exposed-modules: PluginType, UtilityPrelude, PluginMain
   other-modules: HTMLRequest, AnswerRequest
   default-language: Haskell2010

@@ -4,6 +4,7 @@ module Choices where
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Monoid
+import Data.Ratio
 import Data.Maybe
 import GHC.Generics
 import qualified Data.Text as T
@@ -63,6 +64,10 @@ instance Typesettable Blind where
     typeset (Blind t) = Blind (formatMarkdown t)
 
 
+countSuccessRatio :: (MCQMarkup mmc Choice) -> [Maybe Bool] -> Rational
+countSuccessRatio MCM{..} es = fromIntegral (length [()|(Just a,c) <- zip es choices, a==correct c])
+                                               % fromIntegral (length choices)
+
 multipleMultipleChoice :: Plugin (Markup (MCQMarkup MMC Choice), State (Maybe [Maybe Bool])) 
                                  (Markup (MCQMarkup MMC Choice), TaskID, Input ([Maybe Bool])) 
                                  (Save (Maybe [Maybe Bool]),Web Value,BlackboardOut)
@@ -77,7 +82,8 @@ multipleMultipleChoice
     update (Markup mcm,TID taskID, Input i) = return $ 
                                    (Save (Just i)
                                    ,Web  (object ["state".=i
-                                                 ,"question".=typeset mcm])
+                                                 ,"question".=typeset mcm
+                                                 ,"points".=countSuccessRatio mcm i])
                                    ,BlackboardOut (catMaybes [fmap Put (onTry mcm)
                                                              ,Just (Put taskID)]))
     render (Markup mcm,State state) = return $

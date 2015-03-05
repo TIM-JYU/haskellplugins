@@ -1,16 +1,7 @@
 # GIT
 
-Tämä plugin on nykyisin git-subtree. Jos haluatte päivittää sitä niin
-komento on 
-
-   git subtree pull --prefix=Choices/ git@yousource.it.jyu.fi:ties343-funktio-ohjelmointi/MultipleChoicePlugin.git master 
-
-Vai onko?
-
-    git fetch choices
-    git merge -s subtree choices/master
-
-parempi?
+Tämä plugin on nykyisin git-subtree. En keksi miten subtreen saa
+toimimaan, joten jos haluatee päivittää tätä, niin ottakaa oikea repo alas.
 
     
 # Prototyyppi monivalintapluginista

@@ -7,7 +7,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy.Encoding as LT
 import Snap.Http.Server
 
-import PluginType
+import PluginMain
 import Choices
                                 
 main :: IO ()

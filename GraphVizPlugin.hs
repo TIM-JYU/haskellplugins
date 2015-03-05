@@ -11,6 +11,7 @@ import System.Process
 import UtilityPrelude 
 
 import PluginType
+import PluginMain
 
 data Size = Normal | Small | Large deriving (Show,Generic)
 instance FromJSON Size where
@@ -30,7 +31,7 @@ graphViz = Plugin{..}
     render (Markup markup)   = case gvType markup of
         "dot"        -> runGV markup "dot"
         "neato"      -> runGV markup "neato"
-        "osage"      -> runGV markup "neato"
+        "osage"      -> runGV markup "osage"
         "patchwork"  -> runGV markup "patchwork"
     additionalRoutes = noRoutes
 

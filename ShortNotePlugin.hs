@@ -9,6 +9,7 @@ import qualified Data.Text.Lazy.Encoding as LT
 import Snap.Http.Server
 
 import PluginType
+import PluginMain
 
 data NoteMarkup = NM {width,height::Int,prompt::T.Text} deriving (Show,Generic)
 data NoteCommands = SaveNote T.Text | SubmitNote T.Text deriving (Show,Generic)

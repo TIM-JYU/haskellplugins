@@ -138,10 +138,6 @@ serveStaticFiles from plugin = do
 --
 ---- | Plain input is used to extract `{"input":..}` messages that the experimentation
 ----   mode needs to be able to catch so it can pretend to be TIM.
-newtype PlainInput a = PI {fromPlainInput :: a}
-instance FromJSON a => FromJSON (PlainInput a) where
-    parseJSON (Object v) = PI <$> v .: "input"
-    parseJSON _ = mzero
 
 fromJSON' :: FromJSON a => Value -> a
 fromJSON' a = case fromJSON a of

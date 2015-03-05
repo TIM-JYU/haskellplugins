@@ -215,3 +215,8 @@ getField f (Object v) = case HashMap.lookup f v of
                         Error e   -> AR $ left e
                         Success a -> AR $ right a
 getField _ x = AR $ left ("Expected object, got "++show x)
+
+newtype PlainInput a = PI {fromPlainInput :: a}
+instance FromJSON a => FromJSON (PlainInput a) where
+    parseJSON (Object v) = PI <$> v .: "input"
+    parseJSON _ = mzero

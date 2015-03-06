@@ -64,13 +64,19 @@ instance Typesettable Blind where
     typeset (Blind t) = Blind (formatMarkdown t)
 
 
-countSuccessRatio :: (MCQMarkup mmc Choice) -> [Maybe Bool] -> Rational
-countSuccessRatio MCM{..} es = fromIntegral (length [()|(Just a,c) <- zip es choices, a==correct c])
-                                               % fromIntegral (length choices)
+countChoices :: (MCQMarkup mmc Choice) -> [Maybe Bool] -> Integer
+countChoices MCM{..} es =  fromIntegral (length choices)
+
+countSuccess :: (MCQMarkup mmc Choice) -> [Maybe Bool] -> Integer
+countSuccess MCM{..} es = fromIntegral $ length [()|(Just a,c) <- zip es choices, a==correct c]
+
 
 multipleMultipleChoice :: Plugin (Markup (MCQMarkup MMC Choice), State (Maybe [Maybe Bool])) 
                                  (Markup (MCQMarkup MMC Choice), TaskID, Input ([Maybe Bool])) 
-                                 (Save (Maybe [Maybe Bool]),Web Value,BlackboardOut)
+                                 (Save (Maybe [Maybe Bool])
+                                 ,Web Value
+                                 ,TimInfo Value  
+                                 ,BlackboardOut)
 multipleMultipleChoice  
    = Plugin{..}
   where 
@@ -81,9 +87,11 @@ multipleMultipleChoice
     additionalFiles = ["MMCQTemplate.html"]
     update (Markup mcm,TID taskID, Input i) = return $ 
                                    (Save (Just i)
-                                   ,Web  (object ["state".=i
-                                                 ,"question".=typeset mcm
-                                                 ,"points".=countSuccessRatio mcm i])
+                                   ,Web  (object ["state"    .= i
+                                                 ,"question" .= typeset mcm])
+                                   ,TimInfo (object ["vars"   .= object ["correct" .= countSuccess mcm i
+                                                                        ,"count"   .= countChoices mcm i]
+                                                    ,"points" .= countSuccess mcm i])
                                    ,BlackboardOut (catMaybes [fmap Put (onTry mcm)
                                                              ,Just (Put taskID)]))
     render (Markup mcm,State state) = return $

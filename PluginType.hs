@@ -1,35 +1,23 @@
 {-#LANGUAGE DeriveGeneric, OverloadedStrings, ScopedTypeVariables, DataKinds, MultiParamTypeClasses, FlexibleInstances, PolyKinds, DeriveFunctor, FlexibleContexts#-}
 module PluginType where
 
-import Data.Aeson
 import GHC.Generics
 
+import Data.Aeson 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
-import qualified Data.Text.Template as TMPL
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.Lazy.Encoding as LT
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.ByteString as BS
-import qualified Data.HashMap.Strict as HM
-import Data.HashMap.Strict (HashMap,(!))
 import Data.Hashable
 import qualified Data.HashMap.Strict as HashMap
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
 import Data.List
-import Data.IORef
 import Control.Monad.Trans.Either
 
 import Snap.Core
-import Snap.Http.Server
 import Snap.Util.Readable
-import Snap.Util.FileServe
 
-import qualified AnswerRequest as A
-import qualified HTMLRequest   as H
-
-import System.Directory
 import UtilityPrelude
 
 -- | Simplified interface for TIM plugins
@@ -49,6 +37,7 @@ a & f = f a
 -- Blackboard specialization
 data BlackboardCommand = Put T.Text | Delete T.Text deriving (Eq,Ord,Show)
 
+keyOf :: BlackboardCommand -> T.Text
 keyOf (Put t)    = t
 keyOf (Delete t) = t
 
@@ -62,8 +51,10 @@ instance ToJSON BlackboardCommand where
     toJSON (Put t) = String t
     toJSON (Delete t) = String (T.cons '!' t)
 
+execBBCs :: HashSet T.Text -> [BlackboardCommand] -> HashSet T.Text
 execBBCs hm bbcs = foldl' execBBC hm bbcs
 
+execBBC :: HashSet T.Text -> BlackboardCommand -> HashSet T.Text
 execBBC hm (Put t)    = HashSet.insert t hm
 execBBC hm (Delete t) = HashSet.delete t hm
 
@@ -119,8 +110,10 @@ instance Alternative (AR s) where
     empty = AR $ left "empty"
     AR a<|>AR b = AR $ a<|> b
 
+runAR :: forall (t :: k) a. AR t a -> IO (Either String a)
 runAR (AR x) = runEitherT x
 
+ar :: forall (t :: k) c b. AR t b -> (String -> IO c) -> (b -> IO c) -> IO c
 ar (AR x) toLeft toRight = eitherT toLeft toRight x
 
 class Available s a where
@@ -214,6 +207,7 @@ instance Available TimUpdate TaskID where
 instance FromJSON a => Available TimUpdate (Input a) where
     getIt (TimUpdate x) = Input <$> getField "input" x 
 
+getField :: forall (s :: k) a. FromJSON a => T.Text -> Value -> AR s a
 getField f (Object v) = case HashMap.lookup f v of
                     Nothing -> AR $ left ("No key '"++show f++"' in "++show (Object v))
                     Just s  -> case fromJSON s of

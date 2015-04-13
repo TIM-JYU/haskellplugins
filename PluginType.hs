@@ -76,10 +76,6 @@ escape = LT.concatMap esc
 noRoutes :: Snap ()    
 noRoutes = return ()
 
---            --
--- - Server - --
---            --
-
 -- | Various requirements that the plugin might have.
 data Requirement = JS T.Text
                  | CSS T.Text
@@ -151,6 +147,10 @@ newtype Markup a = Markup a deriving (Eq,Show)
 newtype Input  a = Input a deriving (Eq,Show)
 newtype User   = User T.Text deriving (Eq,Show)
 newtype Blackboard = Blackboard (HashSet T.Text) deriving (Eq,Show)
+instance Monoid Blackboard where
+    mempty = Blackboard mempty
+    mappend (Blackboard a) (Blackboard b) = Blackboard (mappend a b)
+
 newtype TaskID  = TID {getTaskID :: T.Text} deriving (Eq,Show)
 instance Hashable TaskID where
     hashWithSalt s (TID d) = hashWithSalt (s*7) d

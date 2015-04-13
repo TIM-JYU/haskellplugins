@@ -3,15 +3,11 @@ module PluginMain where
 
 import Data.Aeson
 import qualified Data.Aeson.Types as Aeson
-
 import qualified Data.Text as T
-
 import Snap.Core
 import Snap.Util.FileServe
-
-
+import System.FilePath
 import UtilityPrelude
-
 import PluginType
 
 
@@ -63,11 +59,12 @@ ins key (First (Just v)) x = (key.=v):x
 
 serveStaticFiles :: MonadSnap m => FilePath -> Plugin renderP updateP outputP -> m ()
 serveStaticFiles from plugin = do
-        let locals = [T.unpack file | CSS file <- requirements plugin]
-                     ++ [T.unpack file | JS  file <- requirements plugin]
-        rq <- ((from++"/") ++) <$> getSafePath
-        when (rq`elem`locals) (serveFile rq)
-        when (rq`elem`additionalFiles plugin) (serveFile rq)
+        let locals = [file | CSS file <- requirements plugin]
+                     ++ [file | JS  file <- requirements plugin]
+                     ++ map T.pack (additionalFiles plugin)
+        proposedPath <- getSafePath
+        when (T.pack proposedPath`elem`locals)
+             (serveFile (from</>proposedPath))
 --
 --experiment :: forall structure markup state input output. 
 --                (FromJSON structure, FromJSON state, ToJSON output, FromJSON input) => 

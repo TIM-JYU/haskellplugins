@@ -1,4 +1,6 @@
 {-#LANGUAGE DeriveGeneric, OverloadedStrings, ScopedTypeVariables, DataKinds, MultiParamTypeClasses, FlexibleInstances, PolyKinds, DeriveFunctor, FlexibleContexts#-}
+-- This module provides a standard main function for running plugins in tim.it.jyu.fi. It is not necessary
+-- for plugins used in functional-programming.it.jyu.fi
 module PluginMain where
 
 import Data.Aeson
@@ -9,6 +11,11 @@ import Snap.Util.FileServe
 import System.FilePath
 import UtilityPrelude
 import PluginType
+
+import Data.IORef
+import Data.HashSet (HashSet)
+import Snap.Http.Server
+import qualified Data.Text.Lazy as LT
 
 
 -- | Serve a plugin
@@ -65,34 +72,39 @@ serveStaticFiles from plugin = do
         proposedPath <- getSafePath
         when (T.pack proposedPath`elem`locals)
              (serveFile (from</>proposedPath))
---
---experiment :: forall structure markup state input output. 
---                (FromJSON structure, FromJSON state, ToJSON output, FromJSON input) => 
---                    Plugin structure state input output -> structure -> Int -> IO ()
---experiment plugin markup' port = do 
---    state  <- newIORef (initial plugin)
---    markup <- newIORef markup' 
---    blackboard <- newIORef (mempty :: HashSet T.Text)
---    let context "port"   = pure (T.pack $ show port)
---        context "plugin" = do
---                            m <- readIORef markup 
---                            s <-  readIORef state
---                            LT.toStrict <$> render plugin (m,s)
---        context "moduleDeps" = pure . T.pack . show $ [x | NGModule x <- requirements plugin]
---        context "scripts"    = pure . T.unlines 
---                                        $ ["<script src='"<>x<>"'></script>" 
---                                          | JS x <- requirements plugin]
---        context "styles"       = pure . T.unlines 
---                                        $ ["<link rel='stylesheet' type='text/css' href='"<>x<>"'>" 
---                                          | CSS x <- requirements plugin]
---        context "app"    = pure "MCQ"
---        context x        = pure $ "??"<>x<>"??"
---        routes :: Snap ()
---        routes = route [
---          ("/index.html", method GET $ do
---              pg  <- liftIO $ TMPL.renderA defaultPage context
---              writeLazyText pg
---          ) ,
+
+-- | `experiment` is used to test plugins without the whole server environment. Either compile this to 
+-- a binary or run it from ghci.
+experiment :: forall m renderP updateP output a. 
+         (MonadSnap m, Available TimRender renderP, Available TimUpdate updateP,Reply TimResult output) => 
+         Plugin renderP updateP output -> a -> Int -> m ()
+experiment plugin markup' port = do 
+    state  <- newIORef (Nothing)
+    markup <- newIORef markup' 
+    blackboard <- newIORef (mempty :: HashSet T.Text)
+    let context = do
+             m  <- readIORef markup 
+             st <-  readIORef state
+             pg <- case st of
+                    Just s -> LT.toStrict <$> render plugin (m,s)
+                    Nothing
+             return $ \kw ->
+                     case kw of
+                        "port"   -> T.pack (show port)
+                        "plugin" -> pg
+                        "moduleDeps" -> T.pack . show $ [x | NGModule x <- requirements plugin]
+                        "scripts"    -> T.unlines 
+                                                $ ["<script src='"<>x<>"'></script>" 
+                                                  | JS x <- requirements plugin]
+                        "styles"       ->T.unlines 
+                                                $ ["<link rel='stylesheet' type='text/css' href='"<>x<>"'>" 
+                                                  | CSS x <- requirements plugin]
+                        "app"    -> "MCQ"
+                        x        -> "??"<>x<>"??"
+        routes :: Snap ()
+        routes = route [
+          ("/index.html", method GET $ liftIO context >>= writeText . defaultPage 
+          )
 --          ("testPlugin/answer/", method PUT $ do
 --             req <- getBody
 --             stateVal <- liftIO $ readIORef state
@@ -107,32 +119,32 @@ serveStaticFiles from plugin = do
 --               [] & ins "web" (_web tims)
 --               -- ["web" .= _web tims] 
 --          )
---          ] <|> serveDirectory "." -- serveStaticFiles "." plugin
+          ] <|> serveDirectory "." <|> serveStaticFiles "." plugin
 --
---    httpServe (setPort port mempty)
---              (routes)
---    where
---     defaultPage = TMPL.template " \
--- \    <!DOCTYPE html> \
--- \     <html lang='en'> \
--- \     <head> <meta charset='utf-8'> \
--- \                 <script src='https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.17/angular.min.js'></script>\
--- \                 ${scripts}\
--- \                 ${styles}\
--- \                 <script> \
--- \                  var mainModule = angular.module('testApp',${moduleDeps}); \
--- \                 </script> \
--- \    </head> \
--- \    \
--- \     <body id='home' ng-app='testApp'> \
--- \     <h1>Test</h1> \
--- \     <div id='testPlugin' data-plugin='http://localhost:${port}'>\
--- \      $plugin \
--- \     </div> \
--- \     </body> \
--- \    </html> "
---
---
+    httpServe (setPort port mempty)
+              (routes)
+    where
+     defaultPage m = " \
+ \    <!DOCTYPE html> \
+ \     <html lang='en'> \
+ \     <head> <meta charset='utf-8'> \
+ \                 <script src='https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.17/angular.min.js'></script>\
+ \                 "<>m "scripts"<>"\
+ \                 "<>m "styles"<>"\
+ \                 <script> \
+ \                  var mainModule = angular.module('testApp',"<>m "moduleDeps"<>");\
+ \                 </script> \
+ \    </head> \
+ \    \
+ \     <body id='home' ng-app='testApp'> \
+ \     <h1>Test</h1> \
+ \     <div id='testPlugin' data-plugin='http://localhost:"<>m "port"<>"'>\
+ \      "<>m "plugin"<>"\
+ \     </div> \
+ \     </body> \
+ \    </html> "
+
+
 ---- | Plain input is used to extract `{"input":..}` messages that the experimentation
 ----   mode needs to be able to catch so it can pretend to be TIM.
 

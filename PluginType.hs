@@ -20,13 +20,46 @@ import Snap.Util.Readable
 
 import UtilityPrelude
 
--- | Simplified interface for TIM plugins
+-- | Simplified interface for TIM plugins. 
+-- The plugin has three parameters - the information it requires for rendering 
+-- itself as Html (`renderP`), the information required to update the itself
+-- according to user actions (`updateP`) and finally the information it outputs
+-- back to the web services (`outputP`). 
+-- 
+-- To actually use the resulting plugin, the `renderP` and the `updateP` types must
+-- belong to `Available TimRender` and `Available TimUpdate` classes respectively.
+-- The most common members of these classes are:
+--
+-- Type                        | Available TimRender | Available TimUpdate | Use
+-- ()                          | X                   | X                   | Indicates unnecessary argument
+-- 2-4 tuples                  | X                   | X                   | Free
+-- TaskID                      | X                   | X                   | Identifier of the current plugin
+-- To/FromJson x a => State a  | X                   | X                   | Stored plugin state
+-- To/FromJson x a => Markup a | X                   | X                   | Converted from the document markup 
+-- To/FromJson x a => Input a  |                     | X                   | Input received from the web (javascript+user)
+-- User                        | X                   | X                   | Identifier of user viewing the plugin
+-- Also, all used fields must be instances of From/ToJson classes from Aeson package.
+-- 
+-- The `outputP` describes the result of the plugin call. It must be in `Reply TimResult` class, which
+-- contains the following instances:
+--
+-- Type                                       | Use
+-- ()                                         | Indicates no reply needed
+-- 2-4 tuples                                 | Indicate multiple results, such as sending something to the browser
+--                                            | and saving it to a plugin state
+-- (ToJSON a) => Reply TimResult (Save a)     | The result saved to db. Fetched by `State´ in update/reply
+-- (ToJSON a) => Reply TimResult (Web a)      | The result sent to the web browser. Must be json encodeable
+-- (ToJSON a) => Reply TimResult (TimInfo a)  | The result sent to the surrounding system. Used to indicate
+--                                            | exercise scores and such (not implemented fully yet)
+--
+-- See `https://tim.it.jyu.fi/view/tim/TIMin%20kehitys/Plugin-speksi` for
+-- more information.
 data Plugin renderP updateP outputP = Plugin 
-        { render  :: renderP -> IO LT.Text
-        , update  :: updateP -> IO outputP
-        , requirements :: [Requirement]
-        , additionalFiles :: [FilePath]
-        , additionalRoutes :: Snap ()}
+        { render  :: renderP -> IO LT.Text -- ^Convert render parameters into HTML
+        , update  :: updateP -> IO outputP -- ^Produce output on user action
+        , requirements :: [Requirement]    -- ^Which scripts/css/angular modules are required?
+        , additionalFiles :: [FilePath]    -- ^Additional files such as angular templates
+        , additionalRoutes :: Snap ()}     -- ^Anything else that is 'global' to this kind of a plugin?
 
 -- Stolen from Control.Lens
 (&) :: a -> (a -> b) -> b

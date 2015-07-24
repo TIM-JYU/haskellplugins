@@ -1,4 +1,13 @@
-{-#LANGUAGE DeriveGeneric, OverloadedStrings, ScopedTypeVariables, DataKinds, MultiParamTypeClasses, FlexibleInstances, PolyKinds, DeriveFunctor, FlexibleContexts#-}
+{-#LANGUAGE DeriveGeneric
+  , OverloadedStrings
+  , ScopedTypeVariables
+  , DataKinds
+  , MultiParamTypeClasses
+  , GADTs
+  , FlexibleInstances
+  , DeriveFunctor
+  , FlexibleContexts
+  , RecordWildCards#-}
 -- This module provides a standard main function for running plugins in tim.it.jyu.fi. It is not necessary
 -- for plugins used in functional-programming.it.jyu.fi
 module PluginMain where
@@ -11,11 +20,17 @@ import Snap.Util.FileServe
 import System.FilePath
 import UtilityPrelude
 import PluginType
+import Data.Proxy
+import Data.Monoid
+import Data.Dynamic -- Bad Ville
 
+import qualified Data.ByteString.Lazy as LBS
 import Data.IORef
 import Data.HashSet (HashSet)
 import Snap.Http.Server
 import qualified Data.Text.Lazy as LT
+import SimpleScripts
+
 
 
 -- | Serve a plugin
@@ -70,28 +85,62 @@ serveStaticFiles from plugin = do
                      ++ [file | JS  file <- requirements plugin]
                      ++ map T.pack (additionalFiles plugin)
         proposedPath <- getSafePath
-        when (T.pack proposedPath`elem`locals)
-             (serveFile (from</>proposedPath))
+        if (T.pack proposedPath`elem`locals)
+             then (serveFile (from</>proposedPath))
+             else empty 
 
 -- | `experiment` is used to test plugins without the whole server environment. Either compile this to 
 -- a binary or run it from ghci.
-experiment :: forall m renderP updateP output a. 
-         (MonadSnap m, Available TimRender renderP, Available TimUpdate updateP,Reply TimResult output) => 
-         Plugin renderP updateP output -> a -> Int -> m ()
-experiment plugin markup' port = do 
-    state  <- newIORef (Nothing)
-    markup <- newIORef markup' 
-    blackboard <- newIORef (mempty :: HashSet T.Text)
+data Experiment m s = ES {markup::m, state::s} deriving (Eq,Ord,Show)
+data ExperimentWithInput m s i = ESI {experimented::Experiment m s, input::i} deriving (Eq,Ord,Show)
+instance Available (Experiment m s)            (State s)  where getIt es = pure (State  (state es))
+instance Available (ExperimentWithInput m s i) (State s)  where getIt es = pure (State  (state (experimented es)))
+instance Available (Experiment m s)            (Markup m) where getIt es = pure (Markup (markup es))
+instance Available (ExperimentWithInput m s i) (Markup m) where getIt es = pure (Markup (markup (experimented es)))
+instance Available (ExperimentWithInput m s i) (Input  i) where getIt es = pure (Input (input es))
+data ExperimentOutput = EO {toWeb :: First Value, toState::First Dynamic} deriving (Show)
+instance Monoid (ExperimentOutput) where
+     (EO a b) `mappend` (EO c d) = EO (mappend a c) (mappend b d)
+     mempty = EO mempty mempty
+instance ToJSON c => Reply (ExperimentOutput) (Web c) where
+    putIt eo (Web a) = return $ eo `mappend` (EO (First (Just (toJSON a))) mempty)
+instance Typeable a => Reply (ExperimentOutput) (Save a) where
+    putIt eo (Save a) = return $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
+
+wrap :: forall m s renderP updateP output. 
+    (Available (Experiment m s) renderP
+    ,FromJSON updateP
+    ,Reply (ExperimentOutput) output
+    ) =>
+        Plugin renderP updateP output 
+        -> Plugin (Experiment m s) (ExperimentWithInput m s LBS.ByteString) (ExperimentOutput)
+wrap plugin = Plugin 
+    (\st -> runAR (getIt st) >>= \r -> case r of
+                Left  e -> error $ "Could not render:" <> e
+                Right r -> render plugin r)
+    (\sti -> case eitherDecode (input sti) of
+              Left err  -> error err
+              Right val -> do
+                tims <- update plugin (val::updateP)
+                putIt (mempty) tims
+    )
+    (requirements plugin)
+    (additionalFiles plugin)
+    (additionalRoutes plugin)
+ 
+experiment ::
+         Typeable state => 
+         Plugin (Experiment markup state) (ExperimentWithInput markup state LBS.ByteString) (ExperimentOutput)
+          -> markup -> state -> Int -> IO ()
+experiment plugin markup' state' port = do 
+    experiment  <- newIORef (ES{markup=markup',state=state'})
     let context = do
-             m  <- readIORef markup 
-             st <-  readIORef state
-             pg <- case st of
-                    Just s -> LT.toStrict <$> render plugin (m,s)
-                    Nothing
+             st  <- readIORef experiment
+             pg <- (render plugin st)
              return $ \kw ->
                      case kw of
                         "port"   -> T.pack (show port)
-                        "plugin" -> pg
+                        "plugin" -> LT.toStrict pg
                         "moduleDeps" -> T.pack . show $ [x | NGModule x <- requirements plugin]
                         "scripts"    -> T.unlines 
                                                 $ ["<script src='"<>x<>"'></script>" 
@@ -103,27 +152,34 @@ experiment plugin markup' port = do
                         x        -> "??"<>x<>"??"
         routes :: Snap ()
         routes = route [
-          ("/index.html", method GET $ liftIO context >>= writeText . defaultPage 
+          ("/index.html", method GET $ liftIO context >>= writeText . defaultPage)
+          ,("/stdlib.js", method GET $ writeText allJS)
+          ,("/plugins/testPluginType/testPlugin/answer/", method PUT $ do
+               liftIO $ putStrLn "Update called"
+               req  <- readRequestBody 100000 -- TODO: Sensible limit..
+               liftIO $ print ("REQ",req)
+               st  <- liftIO $ readIORef experiment
+               let 
+                 ctx = ESI st req
+               us <- liftIO (update plugin ctx)
+               maybe (return ()) (writeLBS . encode) (getFirst . toWeb $ us)
+               liftIO $ case getFirst (toState us) of
+                        Nothing ->  return ()
+                        Just val -> writeIORef experiment (ES (markup st) (fromDyn val (error "Bad dynamic!")))
+                
           )
---          ("testPlugin/answer/", method PUT $ do
---             req <- getBody
---             stateVal <- liftIO $ readIORef state
---             tims :: TIMCmd state output <- liftIO $ do
---                            m <- readIORef markup
---                            s <- readIORef state
---                            update plugin (m, s, fromPlainInput req)
---             liftIO $ maybe (return ())
---                            (writeIORef state)
---                            (getFirst (_save tims))
---             writeLBS . encode . object $
---               [] & ins "web" (_web tims)
---               -- ["web" .= _web tims] 
---          )
-          ] <|> serveDirectory "." <|> serveStaticFiles "." plugin
+          ] <|> serveDirectory "." <|> serveStaticFiles "." plugin 
+            <|> (modifyResponse (setResponseStatus 404 "No such service")>>writeText "No such service")
 --
     httpServe (setPort port mempty)
               (routes)
     where
+     -- runArM :: forall s a. MonadSnap m => AR s a -> (a-> m ()) -> m ()
+     runArM arAction f = do
+           eps <- liftIO $ runAR arAction
+           case eps of
+                Left err -> error "Not supported"
+                Right v  -> f v
      defaultPage m = " \
  \    <!DOCTYPE html> \
  \     <html lang='en'> \
@@ -138,15 +194,25 @@ experiment plugin markup' port = do
  \    \
  \     <body id='home' ng-app='testApp'> \
  \     <h1>Test</h1> \
- \     <div id='testPlugin' data-plugin='http://localhost:"<>m "port"<>"'>\
+ \     <div id='testPlugin' data-plugin='http://localhost:"<>m "port"<>"/plugins/testPluginType"<>"'>\
  \      "<>m "plugin"<>"\
  \     </div> \
  \     </body> \
  \    </html> "
 
 
+
 ---- | Plain input is used to extract `{"input":..}` messages that the experimentation
 ----   mode needs to be able to catch so it can pretend to be TIM.
+data PlainInput a = PlainInput a deriving (Eq,Ord,Show)
+instance FromJSON a => FromJSON (Input a) where
+    parseJSON (Object v) = Input <$> v.: "input"
+    parseJSON a          = fail $ "expected input field in "<>show a
+instance FromJSON a => FromJSON (PlainInput a) where
+    parseJSON (Object v) = PlainInput <$> v.: "input"
+    parseJSON a          = fail $ "expected input field in "<>show a
+instance ToJSON a => ToJSON (PlainInput a) where
+    toJSON a = object ["input".=toJSON a]
 
 fromJSON' :: FromJSON a => Value -> a
 fromJSON' a = case fromJSON a of

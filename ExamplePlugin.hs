@@ -11,8 +11,8 @@ import qualified Data.Text.Lazy as LT
 -- > :set -XOverloadedStrings
 -- > experiment (wrap toyPlugin) ("kissa"::LT.Text) ("koira"::LT.Text) 8000
 --
--- To see the rendered plugin then open localhost:8000 in browser. When done,
--- Ctrl-C will quit the plugin and return you to ghci. 
+-- To see the rendered plugin then open localhost:8000/index.html in browser.
+-- When done, Ctrl-C will quit the plugin and return you to ghci. 
 
 toyPlugin :: Plugin (State LT.Text) (Input LT.Text) (Web Value,Save LT.Text)
 toyPlugin = let

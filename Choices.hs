@@ -1,4 +1,4 @@
-{-#LANGUAGE OverloadedStrings, ScopedTypeVariables, RecordWildCards, DeriveGeneric#-}
+{-#LANGUAGE OverloadedStrings, ScopedTypeVariables, RecordWildCards, DeriveGeneric, CPP#-}
 module Choices where
 
 import Data.Aeson
@@ -11,6 +11,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Encoding as LT
 import Text.Pandoc
+import qualified Text.Blaze.Html
 import Text.Blaze.Html.Renderer.Text
 
 import PluginType
@@ -49,8 +50,13 @@ instance FromJSON Choice where
     parseJSON = genericParseJSON parsingOptions
 
 formatMarkdown :: T.Text -> T.Text
+#if MIN_VERSION_pandoc(1,4,0)
+formatMarkdown = either  (LT.toStrict . renderHtml . Text.Blaze.Html.toHtml . show)
+                         (LT.toStrict . renderHtml . writeHtml def)
+                            . readMarkdown def . T.unpack
+#else
 formatMarkdown = LT.toStrict . renderHtml . writeHtml def . readMarkdown def . T.unpack
-
+#endif
 class Typesettable a where
    typeset :: a -> a
 

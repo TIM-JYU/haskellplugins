@@ -8,7 +8,9 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.Lazy.Encoding as LT
+import qualified Data.Text.Lazy.Builder as LT
 import Data.Hashable
+import HTMLEntities.Builder
 import qualified Data.HashMap.Strict as HashMap
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
@@ -95,16 +97,10 @@ execBBC hm (Delete t) = HashSet.delete t hm
 -- Generating Angular directives with embedded json
 
 ngDirective :: ToJSON a => LT.Text -> a -> LT.Text
-ngDirective tag content = "<"<>tag<>" data-content='"
-                             <>escape (LT.decodeUtf8 (encode content))
-                             <>"'></"<>tag<>">"
-
-escape :: LT.Text -> LT.Text
-escape = LT.concatMap esc
- where
-  esc '\'' = "&#39;"
-  esc '\"' = "&#34;"
-  esc x    = LT.singleton x
+ngDirective tag content = LT.toLazyText $ 
+                             "<"<>LT.fromLazyText tag<>" data-content='"
+                             <>text (LT.toStrict . LT.decodeUtf8 . encode $ content)
+                             <>"'></"<>LT.fromLazyText tag<>">"
 
 noRoutes :: Snap ()    
 noRoutes = return ()

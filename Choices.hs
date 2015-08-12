@@ -13,8 +13,10 @@ import qualified Data.Text.Lazy.Encoding as LT
 import Text.Pandoc
 import qualified Text.Blaze.Html
 import Text.Blaze.Html.Renderer.Text
+import Lucid
 
 import PluginType
+
 
 data Choice = Choice {text :: T.Text
                      ,correct :: Bool
@@ -57,6 +59,44 @@ formatMarkdown = either  (LT.toStrict . renderHtml . Text.Blaze.Html.toHtml . sh
 #else
 formatMarkdown = LT.toStrict . renderHtml . writeHtml def . readMarkdown def . T.unpack
 #endif
+
+renderBlind :: MCQMarkup MMC Blind -> Html ()
+renderBlind = div_ [class_ "mmcq"] $ do
+  p_ [class_ "stem"] (toHtml (stem mmcq)
+  table_ [class_ "choices"] $ do
+    tr_ [class_ "explain"] (td_ "True"<> td_ "False")
+    sequence_ [tr_ [class_ "choice"] (chkbx "T"<>chkbx "F"<>td_ (span_ (f q))) 
+              | q <- choices]
+ where
+    chkbx ident= td_ [style_ "text-align:center"] (input [id_ ident, type_ "checkbox"]
+    f = span [class_ "question"] . toHtmlRaw . text
+
+renderVis :: [Maybe Bool] -> MCQMarkup MMC Choice -> Html ()
+renderVis = div_ [class_ "mmcq"] $ do
+  p_ [class_ "stem"] (toHtml (stem mmcq)
+  table_ [class_ "choices"] $ do
+    tr_ [class_ "explain"] (td_ "True"<> td_ "False")
+    sequence_ [tr_ [class_ "choice"] $ do
+                    (chkbx "T"<>chkbx "F"<>td_ (span_ (f q))
+                                      <>span_ [class_ "explanation"])
+              | q <- choices]
+ where
+    chkbx ident= td_ [style_ "text-align:center"] (input [id_ ident, type_ "checkbox"]
+    f = toHtml . text
+ 
+
+
+renderWith :: (a -> T.Text) -> MCQMarkup MMC a -> Html ()
+renderWith f mmcq = div_ [class_ "mmcq"] $ do
+  p_ [class_ "stem"] (toHtml (stem mmcq)
+  table_ [class_ "choices"] $ do
+    tr_ [class_ "explain"] (td_ "True"<> td_ "False")
+    sequence_ [tr_ [class_ "choice"] (chkbx "T"<>chkbx "F"<>span_ (f q) 
+              | q <- choices]
+ where
+    chkbx ident= td_ [style_ "text-align:center"] (input [id_ ident, type_ "checkbox"]
+ 
+
 class Typesettable a where
    typeset :: a -> a
 
@@ -80,34 +120,29 @@ countSuccess MCM{..} es = fromIntegral $ length [()|(Just a,c) <- zip es choices
 multipleMultipleChoice :: Plugin (Markup (MCQMarkup MMC Choice), State (Maybe [Maybe Bool])) 
                                  (Markup (MCQMarkup MMC Choice), TaskID, Input ([Maybe Bool])) 
                                  (Save (Maybe [Maybe Bool])
-                                 ,Web Value
+                                 ,Web LT.Text
                                  ,TimInfo Value  
                                  ,BlackboardOut)
 multipleMultipleChoice  
    = Plugin{..}
   where 
-    requirements = [
-                    JS "SimpleDirective.js"  
-                   ,JS "script2.js"
-                   ,NGModule "MCQ"]
-    additionalFiles = ["MMCQTemplate.html"]
-    update (Markup mcm,TID taskID, Input i) = return $ 
-                                   (Save (Just i)
-                                   ,Web  (object ["state"    .= i
-                                                 ,"question" .= typeset mcm])
-                                   ,TimInfo (object ["vars"   .= object ["correct" .= countSuccess mcm i
-                                                                        ,"count"   .= countChoices mcm i]
-                                                    ,"points" .= countSuccess mcm i])
-                                   ,BlackboardOut (catMaybes [fmap Put (onTry mcm)
-                                                             ,Just (Put taskID)]))
+    requirements = []
+    additionalFiles = []
+   -- update (Markup mcm,TID taskID, Input i) = return $ 
+   --                                (Save (Just i)
+   --                                ,Web  (object ["state"    .= i
+   --                                              ,"question" .= typeset mcm])
+   --                                ,TimInfo (object ["vars"   .= object ["correct" .= countSuccess mcm i
+   --                                                                     ,"count"   .= countChoices mcm i]
+   --                                                 ,"points" .= countSuccess mcm i])
+   --                                ,BlackboardOut (catMaybes [fmap Put (onTry mcm)
+   --                                                          ,Just (Put taskID)]))
     render (Markup mcm,State state) = return $
                         case state of
-                             Just i  -> ngDirective "mmcq" 
-                                            $ object ["question" .= typeset mcm 
-                                                     ,"state"    .= Just i]
-                             Nothing -> ngDirective "mmcq"
-                                            $ object ["question" .= typeset (blind mcm)
-                                                     ,"state"    .= (Nothing :: Maybe ()) ]
+                             --Just i  -> ngDirective "mmcq" 
+                             --               $ object ["question" .= typeset mcm 
+                             --                        ,"state"    .= Just i]
+                             Nothing -> renderBlind mcm
     additionalRoutes = noRoutes
                                 
 

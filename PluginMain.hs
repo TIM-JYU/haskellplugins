@@ -5,6 +5,7 @@
   , MultiParamTypeClasses
   , GADTs
   , FlexibleInstances
+  , TypeFamilies
   , DeriveFunctor
   , FlexibleContexts
   , RecordWildCards#-}
@@ -108,9 +109,22 @@ instance ToJSON c => Reply (ExperimentOutput) (Web c) where
 instance Typeable a => Reply (ExperimentOutput) (Save a) where
     putIt eo (Save a) = return $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
 
+type family WebInput a where
+        WebInput (Input a)   = a
+        WebInput (Input a,b) = a
+        WebInput (Input a,b,c) = a
+        WebInput (Input a,b,c,d) = a
+        WebInput (Input a,b,c,d,e) = a
+        WebInput (a,b)       = WebInput b
+        WebInput (a,b,c)     = WebInput (b,c)
+        WebInput (a,b,c,d)   = WebInput (b,c,d)
+        WebInput (a,b,c,d,e) = WebInput (b,c,d,e)
+        
 wrap :: forall m s renderP updateP output. 
     (Available (Experiment m s) renderP
-    ,FromJSON updateP
+    ,Available (ExperimentWithInput m s (WebInput updateP)) updateP
+    ,FromJSON (WebInput updateP)
+
     ,Reply (ExperimentOutput) output
     ) =>
         Plugin renderP updateP output 
@@ -119,11 +133,13 @@ wrap plugin = Plugin
     (\st -> runAR (getIt st) >>= \r -> case r of
                 Left  e -> error $ "Could not render:" <> e
                 Right r -> render plugin r)
-    (\sti -> case eitherDecode (input sti) of
-              Left err  -> error err
-              Right val -> do
-                tims <- update plugin (val::updateP)
-                putIt (mempty) tims
+    (\sti ->  case eitherDecode (input sti) of
+                Left  e -> error $ "Could not update:" <> e
+                Right r -> runAR (getIt (sti{input=r::WebInput updateP})) >>= \r -> case r of
+                              Left err  -> error err
+                              Right val -> do
+                                tims <- update plugin (val::updateP)
+                                putIt (mempty) tims
     )
     (requirements plugin)
     (additionalFiles plugin)
@@ -131,7 +147,9 @@ wrap plugin = Plugin
  
 experiment ::
          Typeable state => 
-         Plugin (Experiment markup state) (ExperimentWithInput markup state LBS.ByteString) (ExperimentOutput)
+         Plugin (Experiment markup state) 
+                (ExperimentWithInput markup state LBS.ByteString) 
+                (ExperimentOutput)
           -> markup -> state -> Int -> IO ()
 experiment plugin markup' state' port = do 
     experiment  <- newIORef (ES{markup=markup',state=state'})

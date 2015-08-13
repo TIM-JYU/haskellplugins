@@ -49,13 +49,16 @@ instance FromJSON a => FromJSON (MCQMarkup x a) where
 instance FromJSON Choice where
     parseJSON = genericParseJSON parsingOptions
 
+
+mdOpts = def{writerHTMLMathMethod=MathJax
+              "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"}
 formatMarkdown :: T.Text -> T.Text
 #if MIN_VERSION_pandoc(1,4,0)
 formatMarkdown = either  (LT.toStrict . renderHtml . Text.Blaze.Html.toHtml . show)
-                         (LT.toStrict . renderHtml . writeHtml def)
+                         (LT.toStrict . renderHtml . writeHtml mdOpts)
                             . readMarkdown def . T.unpack
 #else
-formatMarkdown = LT.toStrict . renderHtml . writeHtml def . readMarkdown def . T.unpack
+formatMarkdown = LT.toStrict . renderHtml . writeHtml mdOpts . readMarkdown def . T.unpack
 #endif
 class Typesettable a where
    typeset :: a -> a

@@ -100,6 +100,7 @@ instance Available (ExperimentWithInput m s i) (TaskID)  where  getIt es = pure 
 instance Available (Experiment m s)            (Markup m) where getIt es = pure (Markup (markup es))
 instance Available (ExperimentWithInput m s i) (Markup m) where getIt es = pure (Markup (markup (experimented es)))
 instance Available (ExperimentWithInput m s i) (Input  i) where getIt es = pure (Input (input es))
+
 data ExperimentOutput = EO {toWeb :: First Value, toState::First Dynamic} deriving (Show)
 instance Monoid (ExperimentOutput) where
      (EO a b) `mappend` (EO c d) = EO (mappend a c) (mappend b d)

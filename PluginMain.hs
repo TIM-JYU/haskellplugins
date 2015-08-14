@@ -96,6 +96,7 @@ data Experiment m s = ES {markup::m, state::s} deriving (Eq,Ord,Show)
 data ExperimentWithInput m s i = ESI {experimented::Experiment m s, input::i} deriving (Eq,Ord,Show)
 instance Available (Experiment m s)            (State s)  where getIt es = pure (State  (state es))
 instance Available (ExperimentWithInput m s i) (State s)  where getIt es = pure (State  (state (experimented es)))
+instance Available (ExperimentWithInput m s i) (TaskID)  where  getIt es = pure (TID "experiment_task")
 instance Available (Experiment m s)            (Markup m) where getIt es = pure (Markup (markup es))
 instance Available (ExperimentWithInput m s i) (Markup m) where getIt es = pure (Markup (markup (experimented es)))
 instance Available (ExperimentWithInput m s i) (Input  i) where getIt es = pure (Input (input es))
@@ -107,6 +108,11 @@ instance ToJSON c => Reply (ExperimentOutput) (Web c) where
     putIt eo (Web a) = return $ eo `mappend` (EO (First (Just (toJSON a))) mempty)
 instance Typeable a => Reply (ExperimentOutput) (Save a) where
     putIt eo (Save a) = return $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
+
+instance Reply (ExperimentOutput) (TimInfo a) where
+    putIt eo (TimInfo a) = return eo -- $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
+instance Reply (ExperimentOutput) (BlackboardOut) where
+    putIt eo (BlackboardOut a) = return eo -- $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
 
 type family WebInput a where
         WebInput (Input a)   = a

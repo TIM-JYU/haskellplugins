@@ -95,16 +95,12 @@ execBBC hm (Delete t) = HashSet.delete t hm
 -- Generating Angular directives with embedded json
 
 ngDirective :: ToJSON a => LT.Text -> a -> LT.Text
-ngDirective tag content = "<"<>tag<>" data-content='"
+ngDirective tag content = "<"<>tag<>" data-content="
                              <>escape (LT.decodeUtf8 (encode content))
-                             <>"'></"<>tag<>">"
+                             <>"></"<>tag<>">"
 
 escape :: LT.Text -> LT.Text
-escape = LT.concatMap esc
- where
-  esc '\'' = "&#39;"
-  esc '\"' = "&#34;"
-  esc x    = LT.singleton x
+escape = LT.pack . show . LT.unpack -- ugly..
 
 noRoutes :: Snap ()    
 noRoutes = return ()

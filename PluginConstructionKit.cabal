@@ -23,6 +23,7 @@ Library
       , mtl >=2.1 
 --      , template >= 0.2
       , snap-core >=0.9 
+      , html-entities >= 1.1.0
       , filepath >= 1.3
       , snap-server >=0.9 
       , containers >= 0.5

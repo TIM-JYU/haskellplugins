@@ -140,8 +140,8 @@ wrap plugin = Plugin
                 Left  e -> error $ "Could not render:" <> e
                 Right r -> render plugin r)
     (\sti ->  case eitherDecode (input sti) of
-                Left  e -> error $ "Could not update:" <> e
-                Right r -> runAR (getIt (sti{input=r::WebInput updateP})) >>= \r -> case r of
+                Left  e -> error $ "Could not update:" <> e <> "\n Input was: "<>show (input sti)
+                Right (PlainInput r) -> runAR (getIt (sti{input=r::WebInput updateP})) >>= \r -> case r of
                               Left err  -> error err
                               Right val -> do
                                 tims <- update plugin (val::updateP)

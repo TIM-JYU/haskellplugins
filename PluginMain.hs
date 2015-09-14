@@ -191,7 +191,7 @@ experiment plugin markup' state' port = do
                let 
                  ctx = ESI st req
                us <- liftIO (update plugin ctx)
-               maybe (return ()) (writeLBS . encode) (getFirst . toWeb $ us)
+               maybe (return ()) (writeLBS . encode . \x -> (object ["web" .= x])) (getFirst . toWeb $ us)
                liftIO $ case getFirst (toState us) of
                         Nothing ->  return ()
                         Just val -> writeIORef experiment (ES (markup st) (fromDyn val (error "Bad dynamic!")))
@@ -223,7 +223,7 @@ experiment plugin markup' state' port = do
  \    \
  \     <body id='home' ng-app='testApp'> \
  \     <h1>Test</h1> \
- \     <div id='testPlugin' data-plugin='http://localhost:"<>m "port"<>"/plugins/testPluginType"<>"'>\
+ \     <div id='testPlugin' data-plugin='plugins/testPluginType"<>"'>\
  \      "<>m "plugin"<>"\
  \     </div> \
  \     </body> \

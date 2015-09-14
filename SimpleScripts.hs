@@ -23,17 +23,17 @@ refresh = "function refresh(domObject,data){\
             \var pluginUrl = pluginAddress(domObject);\
             \var pluginWrap = pluginWrapper(domObject);\
             \console.log([pluginUrl,pluginWrap]);\
-            \$.ajax({url:pluginUrl+'/answer/'\
+            \$.ajax({url:'/'+pluginUrl+'/answer/'\
                    \,type:'PUT'\
                    \,data:JSON.stringify({input:data})\
                    \,contentType: 'application/json; charset=utf-8'\
                    \,dataType: 'json'\
-                   \,success:function(r){console.log(['PW',r]); $(pluginWrap).html(r.html)}});}\n"
+                   \,success:function(r){console.log(['PW',r]); $(pluginWrap).html(r.web.html)}});}\n"
 
 answer :: T.Text
 answer = "function answer(domObject,data,handler){\
             \var pluginUrl = pluginAddress(domObject);\
-            \$.ajax({url:pluginUrl+'/answer/'\
+            \$.ajax({url:'/'+pluginUrl+'/answer/'\
                    \,type:'PUT'\
                    \,data:JSON.stringify({input:data})\
                    \,contentType: 'application/json; charset=utf-8'\

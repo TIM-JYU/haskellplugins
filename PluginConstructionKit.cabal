@@ -28,6 +28,7 @@ Library
       , snap-server >=0.9 
       , containers >= 0.5
       , hashable >= 1.2.2.0
+      , html-entities >= 1.1
       , unordered-containers >= 0.2.4
       , directory >= 1.2
       , either >= 4.3

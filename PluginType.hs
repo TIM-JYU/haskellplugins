@@ -68,6 +68,8 @@ data Plugin renderP updateP outputP = Plugin
 a & f = f a
 {-# INLINE (&) #-}
 
+-- Logging specialization
+data Log = LogMsg T.Text deriving (Eq,Ord,Show)
 
 -- Blackboard specialization
 data BlackboardCommand = Put T.Text | Delete T.Text deriving (Eq,Ord,Show)
@@ -243,3 +245,15 @@ getField f (Object v) = case HashMap.lookup f v of
                         Error e   -> AR $ left e
                         Success a -> AR $ right a
 getField _ x = AR $ left ("Expected object, got "++show x)
+
+---- | Plain input is used to extract `{"input":..}` messages that the experimentation
+----   mode needs to be able to catch so it can pretend to be TIM.
+data PlainInput a = PlainInput a deriving (Eq,Ord,Show)
+instance FromJSON a => FromJSON (Input a) where
+    parseJSON (Object v) = Input <$> v.: "input"
+    parseJSON a          = fail $ "expected input field in "<>show a
+instance FromJSON a => FromJSON (PlainInput a) where
+    parseJSON (Object v) = PlainInput <$> v.: "input"
+    parseJSON a          = fail $ "expected input field in "<>show a
+instance ToJSON a => ToJSON (PlainInput a) where
+    toJSON a = object ["input".=toJSON a]

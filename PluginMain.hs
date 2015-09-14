@@ -16,6 +16,7 @@ module PluginMain where
 import Data.Aeson
 import qualified Data.Aeson.Types as Aeson
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Snap.Core
 import Snap.Util.FileServe
 import System.FilePath
@@ -108,6 +109,8 @@ instance ToJSON c => Reply (ExperimentOutput) (Web c) where
     putIt eo (Web a) = return $ eo `mappend` (EO (First (Just (toJSON a))) mempty)
 instance Typeable a => Reply (ExperimentOutput) (Save a) where
     putIt eo (Save a) = return $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
+instance  Reply (ExperimentOutput) Log where
+    putIt eo (LogMsg a) = T.putStrLn a >> return eo
 
 type family WebInput a where
         WebInput (Input a)   = a
@@ -221,17 +224,6 @@ experiment plugin markup' state' port = do
 
 
 
----- | Plain input is used to extract `{"input":..}` messages that the experimentation
-----   mode needs to be able to catch so it can pretend to be TIM.
-data PlainInput a = PlainInput a deriving (Eq,Ord,Show)
-instance FromJSON a => FromJSON (Input a) where
-    parseJSON (Object v) = Input <$> v.: "input"
-    parseJSON a          = fail $ "expected input field in "<>show a
-instance FromJSON a => FromJSON (PlainInput a) where
-    parseJSON (Object v) = PlainInput <$> v.: "input"
-    parseJSON a          = fail $ "expected input field in "<>show a
-instance ToJSON a => ToJSON (PlainInput a) where
-    toJSON a = object ["input".=toJSON a]
 
 fromJSON' :: FromJSON a => Value -> a
 fromJSON' a = case fromJSON a of

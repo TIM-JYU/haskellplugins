@@ -116,8 +116,8 @@ multipleMultipleChoice
 
 
 simpleMultipleChoice :: Plugin (Markup (MCQMarkup MC Choice), State (Maybe [Maybe Bool])) 
-                                 (Markup (MCQMarkup MC Choice), Input Integer) 
-                                 (Save (Maybe Integer),Web Value)
+                                 (Markup (MCQMarkup MC Choice),TaskID, Input Integer) 
+                                 (Save (Maybe Integer),Web Value,BlackboardOut)
 simpleMultipleChoice 
    = Plugin{..}
   where 
@@ -126,7 +126,12 @@ simpleMultipleChoice
                    ,JS "script2.js"
                    ,NGModule "MCQ"]
     additionalFiles = ["MCQTemplate.html"]
-    update (Markup mcm,Input i) = return $ (Save (Just i), Web (object ["state".=i,"question".=typeset mcm]))
+    update (Markup mcm,TID taskID, Input i) = 
+            return $ (Save (Just i)
+                     ,Web (object ["state".=i,"question".=typeset mcm])
+                     ,BlackboardOut (catMaybes [fmap Put (onTry mcm)
+                                               ,Just (Put taskID)])
+                     )
     render (Markup mcm,State state) = return  $
                         case state of
                              Just i  -> ngDirective "mcq" 

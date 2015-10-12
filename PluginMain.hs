@@ -22,13 +22,11 @@ import Snap.Util.FileServe
 import System.FilePath
 import UtilityPrelude
 import PluginType
-import Data.Proxy
 import Data.Monoid
 import Data.Dynamic -- Bad Ville
 
 import qualified Data.ByteString.Lazy as LBS
 import Data.IORef
-import Data.HashSet (HashSet)
 import Snap.Http.Server
 import qualified Data.Text.Lazy as LT
 import SimpleScripts
@@ -43,8 +41,17 @@ serve plugin = route
         [
         ("html/", method POST $ do
             req :: Value <- getBody
-            runArM (getIt (TimRender req) :: AR TimRender renderP)
+            _ <- runArM (getIt (TimRender req) :: AR TimRender renderP)
                    (liftIO  . render plugin >=> writeLazyText)
+            return ()
+        ),
+        ("multihtml/", method POST $ do
+            reqs :: [Value] <- getBody
+            xs <- mapM (\req -> runArM 
+                        (getIt (TimRender req) :: AR TimRender renderP)
+                        (liftIO  . render plugin))
+                       reqs 
+            writeLBS (encode xs)
         ),
         ("reqs/", method GET $ do
             writeLBS . encode $ 
@@ -57,24 +64,26 @@ serve plugin = route
         ),
         ("answer/", method PUT $ do
            req      <- getBody
-           runArM (getIt (TimUpdate req) :: AR TimUpdate updateP)
+           _ <- runArM (getIt (TimUpdate req) :: AR TimUpdate updateP)
                    $ \ps -> do
                       tims  <- liftIO (update plugin ps)
                       reply <- liftIO (putIt (TR []) tims)
                       writeLBS . encode $ reply                      
+           return () 
         )
         ]
         <|> serveStaticFiles "." plugin
     where 
-     runArM :: forall s a. MonadSnap m => AR s a -> (a-> m ()) -> m ()
+     runArM :: forall s a x. MonadSnap m => AR s a -> (a-> m x) -> m (Maybe x)
      runArM arAction f = do
            eps <- liftIO $ runAR arAction
            case eps of
-                Left err -> modifyResponse (setContentType "text/plain" . setResponseCode 400) >> 
-                            writeLazyText "Unable to parse required parameters" >>
-                            writeText (T.pack err)
-
-                Right v  -> f v
+                Left err -> do
+                            modifyResponse (setContentType "text/plain" . setResponseCode 400) 
+                            writeLazyText "Unable to parse required parameters" 
+                            writeText (T.pack err) 
+                            return Nothing
+                Right v  -> do {r<-f v; return (Just r)}
 
 -- Quick helper for building objects
 ins :: ToJSON a => T.Text -> First a -> [Aeson.Pair] -> [Aeson.Pair]
@@ -97,8 +106,8 @@ data Experiment m s = ES {markup::m, state::s} deriving (Eq,Ord,Show)
 data ExperimentWithInput m s i = ESI {experimented::Experiment m s, input::i} deriving (Eq,Ord,Show)
 instance Available (Experiment m s)            (State s)  where getIt es = pure (State  (state es))
 instance Available (ExperimentWithInput m s i) (State s)  where getIt es = pure (State  (state (experimented es)))
-instance Available (ExperimentWithInput m s i) (TaskID)   where  getIt es = pure (TID "experiment_task")
-instance Available (Experiment m s)            (TaskID)   where  getIt es = pure (TID "experiment_task")
+instance Available (ExperimentWithInput m s i) (TaskID)   where getIt _  = pure (TID "experiment_task")
+instance Available (Experiment m s)            (TaskID)   where getIt _  = pure (TID "experiment_task")
 instance Available (Experiment m s)            (Markup m) where getIt es = pure (Markup (markup es))
 instance Available (ExperimentWithInput m s i) (Markup m) where getIt es = pure (Markup (markup (experimented es)))
 instance Available (ExperimentWithInput m s i) (Input  i) where getIt es = pure (Input (input es))
@@ -115,9 +124,9 @@ instance  Reply (ExperimentOutput) Log where
     putIt eo (LogMsg a) = T.putStrLn a >> return eo
 
 instance Reply (ExperimentOutput) (TimInfo a) where
-    putIt eo (TimInfo a) = return eo -- $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
+    putIt eo (TimInfo _) = return eo -- $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
 instance Reply (ExperimentOutput) (BlackboardOut) where
-    putIt eo (BlackboardOut a) = return eo -- $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
+    putIt eo (BlackboardOut _) = return eo -- $ eo `mappend` (EO mempty (First . Just . toDyn $ a))
 
 type family WebInput a where
         WebInput (Input a)   = a
@@ -135,10 +144,10 @@ wrap :: forall m s renderP updateP output.
     ,Available (ExperimentWithInput m s (WebInput updateP)) updateP
     ,FromJSON (WebInput updateP)
 
-    ,Reply (ExperimentOutput) output
+    ,Reply ExperimentOutput output
     ) =>
         Plugin renderP updateP output 
-        -> Plugin (Experiment m s) (ExperimentWithInput m s LBS.ByteString) (ExperimentOutput)
+        -> Plugin (Experiment m s) (ExperimentWithInput m s LBS.ByteString) ExperimentOutput
 wrap plugin = Plugin 
     (\st -> runAR (getIt st) >>= \r -> case r of
                 Left  e -> error $ "Could not render:" <> e
@@ -149,7 +158,7 @@ wrap plugin = Plugin
                               Left err  -> error err
                               Right val -> do
                                 tims <- update plugin (val::updateP)
-                                putIt (mempty) tims
+                                putIt mempty tims
     )
     (requirements plugin)
     (additionalFiles plugin)
@@ -159,23 +168,23 @@ experiment ::
          Typeable state => 
          Plugin (Experiment markup state) 
                 (ExperimentWithInput markup state LBS.ByteString) 
-                (ExperimentOutput)
+                ExperimentOutput
           -> markup -> state -> Int -> IO ()
 experiment plugin markup' state' port = do 
-    experiment  <- newIORef (ES{markup=markup',state=state'})
+    experimentData  <- newIORef ES{markup=markup',state=state'}
     let context = do
-             st  <- readIORef experiment
-             pg <- (render plugin st)
+             st  <- readIORef experimentData
+             pg  <- render plugin st
              return $ \kw ->
                      case kw of
                         "port"   -> T.pack (show port)
                         "plugin" -> LT.toStrict pg
                         "moduleDeps" -> T.pack . show $ [x | NGModule x <- requirements plugin]
                         "scripts"    -> T.unlines 
-                                                $ ["<script src='"<>x<>"'></script>" 
+                                                  ["<script src='"<>x<>"'></script>" 
                                                   | JS x <- requirements plugin]
                         "styles"       ->T.unlines 
-                                                $ ["<link rel='stylesheet' type='text/css' href='"<>x<>"'>" 
+                                                  ["<link rel='stylesheet' type='text/css' href='"<>x<>"'>" 
                                                   | CSS x <- requirements plugin]
                         "app"    -> "MCQ"
                         x        -> "??"<>x<>"??"
@@ -186,28 +195,27 @@ experiment plugin markup' state' port = do
           ,("/plugins/testPluginType/testPlugin/answer/", method PUT $ do
                liftIO $ putStrLn "Update called"
                req  <- readRequestBody 100000 -- TODO: Sensible limit..
-               liftIO $ print ("REQ",req)
-               st  <- liftIO $ readIORef experiment
+               st  <- liftIO $ readIORef experimentData
                let 
                  ctx = ESI st req
                us <- liftIO (update plugin ctx)
-               maybe (return ()) (writeLBS . encode . \x -> (object ["web" .= x])) (getFirst . toWeb $ us)
+               maybe (return ()) (writeLBS . encode . \x -> object ["web" .= x]) (getFirst . toWeb $ us)
                liftIO $ case getFirst (toState us) of
                         Nothing ->  return ()
-                        Just val -> writeIORef experiment (ES (markup st) (fromDyn val (error "Bad dynamic!")))
+                        Just val -> writeIORef experimentData (ES (markup st) (fromDyn val (error "Bad dynamic!")))
                 
           )
           ] <|> serveDirectory "." <|> serveStaticFiles "." plugin 
             <|> (modifyResponse (setResponseStatus 404 "No such service")>>writeText "No such service")
 --
     httpServe (setPort port mempty)
-              (routes)
+              routes
     where
      -- runArM :: forall s a. MonadSnap m => AR s a -> (a-> m ()) -> m ()
      runArM arAction f = do
            eps <- liftIO $ runAR arAction
            case eps of
-                Left err -> error "Not supported"
+                Left _ -> error "Not supported"
                 Right v  -> f v
      defaultPage m = " \
  \    <!DOCTYPE html> \

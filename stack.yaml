@@ -1,9 +1,8 @@
-resolver: lts-3.0
+flags: {}
 packages:
-    - '.'
-    - location:
-            commit: 9935bd6beb03417659b2ba77d465e430fd2ff1f2
-            git: git://yousource.it.jyu.fi/ties343-funktio-ohjelmointi/pluginconstructionkit.git 
-extra-deps:
-    - html-entities-1.1.0.0
-    
+- '.'
+- location:
+    git: git@yousource.it.jyu.fi:ties343-funktio-ohjelmointi/PluginConstructionKit.git
+    commit: b38da8eec20a9426e032c91d0df19e3cdb522b9c
+extra-deps: ["html-entities-1.1.0.0"]
+resolver: lts-3.8

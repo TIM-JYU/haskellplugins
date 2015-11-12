@@ -32,6 +32,9 @@ library
       , unordered-containers >= 0.2.4
       , directory >= 1.2
       , either >= 4.3
+      , hashable >= 1.2
+      , html-entities >= 1.1
+      , filepath >= 1.3
   default-language:    Haskell2010
 
 executable MultipleChoicesPlugin
@@ -51,6 +54,9 @@ executable MultipleChoicesPlugin
       , unordered-containers >= 0.2.4
       , directory >= 1.2
       , either >= 4.3
+      , hashable >= 1.2
+      , html-entities >= 1.1
+      , filepath >= 1.3
   default-language:    Haskell2010
 
 executable ChoicesPlugin
@@ -70,6 +76,9 @@ executable ChoicesPlugin
       , unordered-containers >= 0.2.4
       , directory >= 1.2
       , either >= 4.3
+      , hashable >= 1.2
+      , html-entities >= 1.1
+      , filepath >= 1.3
   default-language:    Haskell2010
 
 executable ShortNotePlugin
@@ -87,6 +96,9 @@ executable ShortNotePlugin
       , unordered-containers >= 0.2.4
       , directory >= 1.2
       , either >= 4.3
+      , hashable >= 1.2
+      , html-entities >= 1.1
+      , filepath >= 1.3
   default-language:    Haskell2010
 
 executable GraphVizPlugin
@@ -104,5 +116,8 @@ executable GraphVizPlugin
       , unordered-containers >= 0.2.4
       , directory >= 1.2
       , either >= 4.3
+      , hashable >= 1.2
+      , html-entities >= 1.1
+      , filepath >= 1.3
       , process >= 1.1
   default-language:    Haskell2010

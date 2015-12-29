@@ -39,6 +39,7 @@ library
 
 executable MultipleChoicesPlugin
   main-is:            MultipleChoicesPlugin.hs
+  other-modules: Choices
   build-depends:       base >=4.6
       , PluginConstructionKit >= 0.1
       , pandoc >= 1.12
@@ -61,6 +62,7 @@ executable MultipleChoicesPlugin
 
 executable ChoicesPlugin
   main-is:            ChoicesPlugin.hs
+  other-modules: Choices
   build-depends:       base >=4.6
       , PluginConstructionKit >= 0.1
       , pandoc >= 1.12

@@ -1,9 +1,9 @@
 function standardDirective(template,build,extract) {
- return function() {
+ return function($sce) {
     return {
       restrict: 'E',
       templateUrl: function(elem,attrs) {
-                    return "/"+elem.parent().attr('data-plugin')+"/"+template;
+                    return (elem.parent().attr('data-plugin')+"/"+template);
                    }, 
       replace: true,
       scope: {},
@@ -20,7 +20,7 @@ function standardDirective(template,build,extract) {
             if (localState!==null) {message.state = localState};
             if (localMarkup!==null) {message.markup = localMarkup};
             $http({method:'PUT'
-                  ,url:"/"+$scope.plugin+"/"+$scope.ident+"/answer/"
+                  ,url:$scope.plugin+"/"+$scope.ident+"/answer/"
                   ,data:message})
              .success(function(data){
                   $scope.content = data.web

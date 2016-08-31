@@ -3,7 +3,7 @@ function standardDirective(template,extract) {
     return {
       restrict: 'E',
       templateUrl: function(elem,attrs) {
-                    return elem.parent().attr('data-plugin')+"/"+template;
+                    return $sce.trustAsUrl(elem.parent().attr('data-plugin')+"/"+template);
                    }, 
       replace: true,
       scope: {},

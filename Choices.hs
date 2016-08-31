@@ -31,7 +31,7 @@ instance ToJSON Blind where
     toJSON (Blind t) = object ["text" .= t]
 
 blind :: MCQMarkup a Choice -> MCQMarkup a Blind
-blind MCM{..} = MCM stem (map hide choices)  onTry
+blind MCM{..} = MCM{choices=map hide choices,..}
 hide :: Choice -> Blind
 hide = Blind . text
 
@@ -41,7 +41,7 @@ data MCQMarkup mckind choice
     = MCM {stem    :: T.Text
           ,choices :: [choice]
           ,onTry   :: Maybe T.Text
-          ,header  :: Maybe T.Text
+          ,headerText  :: Maybe T.Text
           } 
       deriving (Show,Generic)
 
@@ -71,10 +71,10 @@ class Typesettable a where
 
 instance Typesettable a =>
          Typesettable (MCQMarkup x a) where
-    typeset (MCM stem choices ontry) =
-        MCM (formatMarkdown stem) (map typeset choices) ontry
+    typeset MCM{..}  =
+        MCM{stem = formatMarkdown stem, headerText = fmap formatMarkdown headerText,choices = map typeset choices, ..} 
 
-instance Typesettable Choice
+instance Typesettable Choice where
     typeset (Choice t c r) = Choice (formatMarkdown t) c (formatMarkdown r) 
 
 instance Typesettable Blind where

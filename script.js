@@ -10,7 +10,6 @@ function standardDirective(template,extract) {
       controller: function($scope, $element, $http) {
         $scope.ident     = $element.parent().attr("id"); 
         $scope.content = JSON.parse($element.attr("data-content"));
-        console.log(["initial",$scope.content]);
         $scope.plugin = $element.parent().attr("data-plugin");
         $scope.submit = function () {
             var message = {input:extract($scope)};

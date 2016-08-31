@@ -22,6 +22,7 @@ data Choice = Choice {text :: T.Text
                      } deriving (Show,Generic)
 
 parsingOptions = defaultOptions{omitNothingFields=True}
+
 instance ToJSON   Choice where
 
 newtype Blind = Blind T.Text deriving (Show, Generic)
@@ -39,7 +40,8 @@ data MMC
 data MCQMarkup mckind choice 
     = MCM {stem    :: T.Text
           ,choices :: [choice]
-          ,onTry :: Maybe T.Text
+          ,onTry   :: Maybe T.Text
+          ,header  :: Maybe T.Text
           } 
       deriving (Show,Generic)
 
@@ -54,19 +56,25 @@ mdOpts = def{writerHTMLMathMethod=MathJax
               "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"}
 formatMarkdown :: T.Text -> T.Text
 #if MIN_VERSION_pandoc(1,4,0)
-formatMarkdown = either  (LT.toStrict . renderHtml . Text.Blaze.Html.toHtml . show)
-                         (LT.toStrict . renderHtml . writeHtml mdOpts)
-                            . readMarkdown def . T.unpack
+formatMarkdown =
+    either
+        (LT.toStrict . renderHtml . Text.Blaze.Html.toHtml . show)
+        (LT.toStrict . renderHtml . writeHtml mdOpts) .
+    readMarkdown def . T.unpack
 #else
-formatMarkdown = LT.toStrict . renderHtml . writeHtml mdOpts . readMarkdown def . T.unpack
+formatMarkdown =
+    LT.toStrict . renderHtml . writeHtml mdOpts . readMarkdown def . T.unpack
 #endif
+
 class Typesettable a where
    typeset :: a -> a
 
-instance Typesettable a => Typesettable (MCQMarkup x a) where
-    typeset (MCM stem choices ontry) = MCM (formatMarkdown stem) (map typeset choices) ontry
+instance Typesettable a =>
+         Typesettable (MCQMarkup x a) where
+    typeset (MCM stem choices ontry) =
+        MCM (formatMarkdown stem) (map typeset choices) ontry
 
-instance Typesettable Choice where
+instance Typesettable Choice
     typeset (Choice t c r) = Choice (formatMarkdown t) c (formatMarkdown r) 
 
 instance Typesettable Blind where
@@ -86,31 +94,36 @@ multipleMultipleChoice :: Plugin (Markup (MCQMarkup MMC Choice), State (Maybe [M
                                  ,Web Value
                                  ,TimInfo Value  
                                  ,BlackboardOut)
-multipleMultipleChoice  
-   = Plugin{..}
-  where 
-    requirements = [
-                    JS "SimpleDirective.js"  
-                   ,JS "script2.js"
-                   ,NGModule "MCQ"]
+multipleMultipleChoice =
+    Plugin
+    { ..
+    }
+  where
+    requirements = [JS "SimpleDirective.js", JS "script2.js", NGModule "MCQ"]
     additionalFiles = ["MMCQTemplate.html"]
-    update (Markup mcm,TID taskID, Input i) = return $ 
-                                   (Save (Just i)
-                                   ,Web  (object ["state"    .= i
-                                                 ,"question" .= typeset mcm])
-                                   ,TimInfo (object ["vars"   .= object ["correct" .= countSuccess mcm i
-                                                                        ,"count"   .= countChoices mcm i]
-                                                    ,"points" .= countSuccess mcm i])
-                                   ,BlackboardOut (catMaybes [fmap Put (onTry mcm)
-                                                             ,Just (Put taskID)]))
-    render (Markup mcm,State state) = return $
-                        case state of
-                             Just i  -> ngDirective "mmcq" 
-                                            $ object ["question" .= typeset mcm 
-                                                     ,"state"    .= Just i]
-                             Nothing -> ngDirective "mmcq"
-                                            $ object ["question" .= typeset (blind mcm)
-                                                     ,"state"    .= (Nothing :: Maybe ()) ]
+    update (Markup mcm, TID taskID, Input i) =
+        return $
+        ( Save (Just i)
+        , Web (object ["state" .= i, "question" .= typeset mcm])
+        , TimInfo
+              (object
+                   [ "vars" .=
+                     object
+                         [ "correct" .= countSuccess mcm i
+                         , "count" .= countChoices mcm i]
+                   , "points" .= countSuccess mcm i])
+        , BlackboardOut (catMaybes [fmap Put (onTry mcm), Just (Put taskID)]))
+    render (Markup mcm, State state) =
+        return $
+        case state of
+            Just i ->
+                ngDirective "mmcq" $
+                object ["question" .= typeset mcm, "state" .= Just i]
+            Nothing ->
+                ngDirective "mmcq" $
+                object
+                    [ "question" .= typeset (blind mcm)
+                    , "state" .= (Nothing :: Maybe ())]
     additionalRoutes = noRoutes
                                 
 

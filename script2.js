@@ -3,6 +3,10 @@ angular.module('MCQ', [])
 				     , function($scope){
 					$scope.active  = false;
 					$scope.checked = true;
+                    $scope.headertext  = "Check your understanding";
+                    if ($scope.content.question.headertext !== null)
+                        $scope.headertext  = $scope.content.question.headertext;
+                            
 					$scope.answer = $scope.content.state; 
 					if ($scope.answer==null||$scope.answer==undefined) 
                         {

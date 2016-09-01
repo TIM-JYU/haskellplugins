@@ -10,7 +10,6 @@ function standardDirective(template,build,extract) {
       controller: function($scope, $element, $http) {
         $scope.ident     = $element.parent().attr("id"); 
         $scope.content = JSON.parse($element.attr("data-content"));
-        console.log(["initial",$scope.content]);
         $scope.plugin = $element.parent().attr("data-plugin");
         build($scope,$element);
         $scope.submit = function () {
@@ -24,7 +23,6 @@ function standardDirective(template,build,extract) {
                   ,data:message})
              .success(function(data){
                   $scope.content = data.web
-                  console.log(["data",$scope.content]);
                   $scope.checked = true; 			
                  })
              .error(function(data,status,hdrs,cfg){

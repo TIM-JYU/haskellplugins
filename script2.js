@@ -1,19 +1,19 @@
 angular.module('MCQ', [])
   .directive('mmcq', standardDirective("MMCQTemplate.html"
-				     , function($scope){
-					$scope.active  = false;
-					$scope.checked = true;
+                     , function($scope){
+                    $scope.active  = false;
+                    $scope.checked = true;
                     $scope.headertext  = "Check your understanding";
                     if ($scope.content.question.headertext !== null)
                         $scope.headertext  = $scope.content.question.headertext;
                             
-					$scope.answer = $scope.content.state; 
-					if ($scope.answer==null||$scope.answer==undefined) 
+                    $scope.answer = $scope.content.state; 
+                    if ($scope.answer==null||$scope.answer==undefined) 
                         {
                         $scope.checked = false;
                         $scope.active  = true;
                         $scope.answer = new Array($scope.content.question.choices.length);
-	    			    }
+                        }
                     }
                     , function(scope){
                         for(var j=0;j<scope.answer.length;j++) {
@@ -24,8 +24,13 @@ angular.module('MCQ', [])
                         return scope.answer;
                     })) //TODO: cleanup
   .directive('mcq', standardDirective("MCQTemplate.html"
-				     , function($scope){return;}
-                                     , function(scope){return parseInt(scope.userSelection);}));
+    , function($scope){
+        $scope.headertext  = "Check your understanding";
+        console.log(["MCQ content",$scope.content]);
+        if ($scope.content.question.headertext !== null)
+            $scope.headertext  = $scope.content.question.headertext;
+        return;}
+    , function(scope){return parseInt(scope.userSelection);}));
 
 function toBool(lst) {
   var l = new Array(lst.length);

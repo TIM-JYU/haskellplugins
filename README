@@ -1,47 +1,27 @@
-# GIT
+## BUILDING
 
-Tämä plugin on nykyisin git-subtree. En keksi miten subtreen saa
-toimimaan, joten jos haluatee päivittää tätä, niin ottakaa oikea repo alas.
+First, install the build tool. The easiest way is to grab them with curl:
 
-    
-# Prototyyppi monivalintapluginista
+> curl -sSL https://get.haskellstack.org/ | sh
 
-## Tiedostot
+If this feels insecure, go to https://docs.haskellstack.org/ and pick a more suitable
+option.
 
-Olennaiset kooditiedostot (Monivalintojen kannalta)
+Then build the project with `stack build`. 
 
-* `ChoicesPlugin.hs`    -- Varsinainen plugin (yksöisvalinta). Tämä tiedosto kääntyy plugin-web-palvelimeksi.
-* `MultipleChoicesPlugin.hss` - Varsinainen plugin (monivalinta). Tämä tiedosto kääntyy plugin-web-palvelimeksi.
-* `MCQTemplate.html`    -- Angularin html-template tiedosto monivalintatehtävää varten
-* `script.js`           -- Monivalintatehtävän asiakaslogiikka. Toteuttaa angular modulin `mcq`,
-                           joka pitää löytyä siis sivun dependensseistä.
+## USE
 
-Olennaiset tiedostot testausta varten
+After building this you can start the plugins with:
 
-* `examples/testGet.sh`        -- Yksinkertainen curl-skripti, jolla palvelua voi testata.
-                                  Esim. `sh examples/testGet.sh examples/html.request` renderöi
-                                  vastaamattoman pluginin testisivulle (stdout).
-* `examples/html.request`      -- Esimerkki vastaamattomasta monivalinnasta. (Ks. `examples/testGet.sh`)
-* `examples/html.2.request`    -- Esimerkki vastatusta monivalinnasta. (Ks. `examples/testGet.sh`)
-* `examples/Answer.1.request`  -- Esimerkki `/answer`-reitin käytöstä. Tätä voi testata komennolla
-                                  `curl -X PUT --data-binary @examples/Answer.1.request localhost:8080/answer/`
+> stack exec ChoicesPlugin -- -p<port_number>
 
-## Testaus
+and 
 
-Plugin on yritetty koota siten, että sitä voi testata ilman TIM:iä. Sen pitäisi onnistua näin:
+> stack exec MultipleChoicesPlugin -- -p<port_number>
 
-~~~{.bash}
-> cabal sandbox init                                     # Käännetään sandboxissa
-> cabal sandbox add-source ../PluginConstructionKit/     # Otetaan PCK mukaan
-> cabal install --only-dependencies                      # Käännetään dependenssit
-> cabal exec ghci ChoicesPlugin.hs                       # Tai joku muu *Plugin.hs
-> experiment simpleMultipleChoice testQ 8080
-~~~
+## Installation
 
-Ja sitten selaimella localhost:8080/index.html esiin.
+Sorry, no install script yet. You need to grab all .js, *.html and *.css files as well as the binaries.
+The command `stack path --local-install-root` will tell you where the binaries are. You can also build
+a docker container for the plugins with `stack image container`
 
-
-# TODO:
-
-* Tän tiedoston päivitys
-* Graphviz yms. pluginien erottaminen erilleen.

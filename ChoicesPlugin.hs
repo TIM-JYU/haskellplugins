@@ -11,4 +11,4 @@ import PluginMain
 import Choices
                                 
 main :: IO ()
-main = quickHttpServe $ serve simpleMultipleChoice
+main = quickHttpServe $ serve "." simpleMultipleChoice 

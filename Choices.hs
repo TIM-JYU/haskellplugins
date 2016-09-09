@@ -166,10 +166,23 @@ multipleMultipleChoice =
     additionalRoutes = noRoutes
                                 
 
+data SMCAnswer = Blank | Selection Int deriving (Eq,Ord,Show,Generic)
+instance Monoid SMCAnswer where
+    mempty = Blank
+    mappend a b = b
+instance ToJSON SMCAnswer where
+    toJSON Blank = toJSON (Nothing::Maybe Int)
+    toJSON (Selection i) = toJSON (Just i)
+instance FromJSON SMCAnswer where
+    parseJSON x = do
+        p <- parseJSON x
+        case p of
+            Nothing -> return Blank 
+            Just i  -> return (Selection i)
 
-simpleMultipleChoice :: Plugin (Markup (MCQMarkup MC Choice), State (Maybe [Maybe Bool])) 
-                                 (Markup (MCQMarkup MC Choice),TaskID, Input (Maybe Integer)) 
-                                 (Save (Maybe Integer),Web Value,BlackboardOut)
+simpleMultipleChoice :: Plugin (Markup (MCQMarkup MC Choice), State SMCAnswer) 
+                                 (Markup (MCQMarkup MC Choice),TaskID, Input SMCAnswer) 
+                                 (Save SMCAnswer,Web Value,BlackboardOut)
 simpleMultipleChoice =
   Plugin
   { ..
@@ -185,14 +198,14 @@ simpleMultipleChoice =
     render (Markup mcm, State state) =
       return $
       case state of
-        Just i ->
+        Selection i -> traceShow ("STATE",state) $ 
           ngDirective "mcq" $
-          object ["question" .= typeset mcm, "state" .= Just i]
-        Nothing ->
+          object ["question" .= typeset mcm, "state" .= state]
+        Blank -> traceShow ("NoState!")
           ngDirective "mcq" $
           object
             [ "question" .= typeset (blind mcm)
-            , "state" .= (Nothing :: Maybe ())]
+            , "state" .= Blank]
     additionalRoutes = noRoutes
 
 --testQ :: MCQMarkup MC Choice

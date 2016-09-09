@@ -9,19 +9,19 @@
             <th ng-if="checked"></th>
             <th ng-if="checked"></th></tr>
      <tr ng-repeat="choice in content.question.choices">
-      <td style="width:35%"><span style="" class="MCQItem" ng-bind-html="choice.text"></span></td>
-      <td style="width:2%;">
+      <td><span style="" class="MCQItem" ng-bind-html="choice.text"></span></td>
+      <td >
         <input  type="checkbox" ng-model="$parent.answer[$index]" ng-true-value="true" ng-false-value"false"/>
       </td>
-      <td style="width:2%;">
+      <td >
         <input  type="checkbox" ng-model="$parent.answer[$index]" ng-false-value="true" ng-true-value="false" />
         <!-- <input  type="checkbox" ng-model="$parent.answer[$index]" ng-value="false"  />  -->
       </td>
-      <td style="width:5%;" ng-if="checked">
+      <td ng-if="checked">
         <span ng-if="!(answer[$index] == null) && (''+answer[$index] == ''+choice.correct)" class="correct">Correct!</span>
         <span ng-if="!(answer[$index] == null) && (''+answer[$index] !==''+choice.correct)" class="wrong">Wrong!</span>
       </td>
-      <td width="width:46%;" >
+      <td  ng-if="choice.reason" >
         <span class="MCQExpl" ng-bind-html="choice.reason"></span></td>
      </tr>
     </table>

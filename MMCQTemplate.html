@@ -17,7 +17,7 @@
         <input  type="checkbox" ng-model="$parent.answer[$index]" ng-false-value="true" ng-true-value="false" />
         <!-- <input  type="checkbox" ng-model="$parent.answer[$index]" ng-value="false"  />  -->
       </td>
-      <td style="width:5%;" ng-if="checked">{{choice.correct==null}}
+      <td style="width:5%;" ng-if="checked">
         <span ng-if="!(answer[$index] == null) && !(choice.correct == null) && (''+answer[$index] == ''+choice.correct)" class="correct">Correct!</span>
         <span ng-if="!(answer[$index] == null) && !(choice.correct == null) && (''+answer[$index] !==''+choice.correct)" class="wrong">Wrong!</span>
       </td>

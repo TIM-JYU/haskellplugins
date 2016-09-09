@@ -1,9 +1,10 @@
 flags: {}
 packages:
 - '.'
-- location:
+  # - '../PluginConstructionKit/'
+-  location:
     git: git@yousource.it.jyu.fi:ties343-funktio-ohjelmointi/PluginConstructionKit.git
-    commit: 5dd55129af814f06fff7f70c8ec40b9cbcd61c7a
+    commit: 007b6985d4adccf8b5d8c9b28c7553bab087d090 
 
 extra-deps: ["html-entities-1.1.2"]
 resolver: nightly-2016-08-30

@@ -19,15 +19,15 @@ import PluginType
 
 data Choice = Choice {text :: T.Text
                      ,correct :: Bool
-                     ,reason :: T.Text
+                     ,reason :: Maybe T.Text
                      } deriving (Show,Generic)
 
 
 instance ToJSON   Choice where
-parsingOptions = defaultOptions{omitNothingFields=True}
 
 newtype Blind = Blind T.Text deriving (Show, Generic)
 
+parsingOptions = defaultOptions{omitNothingFields=True}
 instance ToJSON Blind where
     toJSON (Blind t) = object ["text" .= t]
 instance FromJSON Blind where
@@ -96,7 +96,7 @@ instance Typesettable a =>
     }
 
 instance Typesettable Choice where
-  typeset (Choice t c r) = Choice (formatMarkdown t) c (formatMarkdown r)
+  typeset (Choice t c r) = Choice (formatMarkdown t) c (formatMarkdown <$> r)
 
 instance Typesettable Blind where
   typeset (Blind t) = Blind (formatMarkdown t)

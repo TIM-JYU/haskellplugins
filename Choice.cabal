@@ -19,6 +19,7 @@ cabal-version:       >=1.10
 executable MultipleChoicesPlugin
   main-is:            MultipleChoicesPlugin.hs
   other-modules: Choices
+  ghc-options: -dynamic
   build-depends:       base >=4.6
       , PluginConstructionKit >= 0.1
       , pandoc >= 1.12

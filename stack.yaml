@@ -7,4 +7,4 @@ packages:
     commit: 007b6985d4adccf8b5d8c9b28c7553bab087d090 
 
 extra-deps: ["html-entities-1.1.2"]
-resolver: nightly-2016-08-30
+resolver: nightly-2016-09-09

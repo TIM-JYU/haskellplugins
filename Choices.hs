@@ -109,6 +109,10 @@ instance Typesettable (SemiBlind) where
 countChoices :: (MCQMarkup mmc α) -> [Maybe Bool] -> Integer
 countChoices MCM {..} es = fromIntegral (length choices)
 
+countSuccessSingle :: (MCQMarkup mmc Choice) -> SMCAnswer -> Integer
+countSuccessSingle _       Blank  = 0 
+countSuccessSingle MCM{..} answer = fromIntegral $ length [() | (n,c) <- zip [0..] choices, Selection n == answer, correct c ]
+
 countSuccess :: (MCQMarkup mmc Choice) -> [Maybe Bool] -> Integer
 countSuccess MCM {..} es =
   fromIntegral $
@@ -182,7 +186,7 @@ instance FromJSON SMCAnswer where
 
 simpleMultipleChoice :: Plugin (Markup (MCQMarkup MC Choice), State SMCAnswer) 
                                  (Markup (MCQMarkup MC Choice),TaskID, Input SMCAnswer) 
-                                 (Save SMCAnswer,Web Value,BlackboardOut)
+                                 (Save SMCAnswer,Web Value,BlackboardOut,TimInfo Value)
 simpleMultipleChoice =
   Plugin
   { ..
@@ -194,7 +198,14 @@ simpleMultipleChoice =
       return $
       ( Save i
       , Web (object ["state" .= i, "question" .= typeset mcm])
-      , BlackboardOut (catMaybes [fmap Put (onTry mcm), Just (Put taskID)]))
+      , BlackboardOut (catMaybes [fmap Put (onTry mcm), Just (Put taskID)])
+      , TimInfo
+              (object
+                   [ "vars" .=
+                     object
+                         [ "correct" .= countSuccessSingle mcm i
+                         , "count"   .= length (choices mcm)]
+                   , "points" .= countSuccessSingle mcm i]))
     render (Markup mcm, State state) =
       return $
       case state of

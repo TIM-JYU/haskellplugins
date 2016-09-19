@@ -17,42 +17,9 @@ import Debug.Trace
 
 import PluginType
 
-data Choice = Choice {text :: T.Text
-                     ,correct :: Bool
-                     ,reason :: Maybe T.Text
-                     } deriving (Show,Generic)
-
-
-instance ToJSON   Choice where
-
-newtype Blind = Blind T.Text deriving (Show, Generic)
-
-parsingOptions = defaultOptions{omitNothingFields=True}
-instance ToJSON Blind where
-    toJSON (Blind t) = object ["text" .= t]
-instance FromJSON Blind where
-    parseJSON (Object v) = Blind <$> v .: "text"
-    parseJSON invalid = typeMismatch "Blind" invalid
-
-blind :: MCQMarkup a Choice -> MCQMarkup a Blind
-blind MCM{..} = MCM{choices=map hide choices,..}
-
-data SemiBlind = Blinded Blind | Open Choice deriving (Show,Generic)
-
-instance ToJSON SemiBlind where
-    toJSON (Open c) = toJSON c
-    toJSON (Blinded b) = toJSON b
-
-blindSemi :: MCQMarkup a Choice -> [Bool] -> MCQMarkup a SemiBlind
-blindSemi MCM{..} toHide = MCM{choices=[if h then Blinded (hide c) else Open c | h <- toHide | c <- choices],..}
-
-hide :: Choice -> Blind
-hide = Blind . text 
-hideSemi :: Choice -> SemiBlind
-hideSemi c =  Blinded (hide c)
-
 data MC
 data MMC
+
 data MCQMarkup mckind choice 
     = MCM {stem    :: T.Text
           ,choices :: [choice]
@@ -62,10 +29,45 @@ data MCQMarkup mckind choice
       deriving (Show,Generic)
 
 instance ToJSON a => ToJSON (MCQMarkup x a) where
+
+parsingOptions = defaultOptions{omitNothingFields=True}
 instance FromJSON a => FromJSON (MCQMarkup x a) where
     parseJSON = genericParseJSON parsingOptions
+
+
+data Choice = Choice {text :: T.Text
+                     ,correct :: Maybe Bool
+                     ,reason :: Maybe T.Text
+                     } deriving (Show,Generic)
+
 instance FromJSON Choice where
     parseJSON = genericParseJSON parsingOptions
+
+instance ToJSON   Choice where
+
+newtype Blind = Blind T.Text deriving (Show, Generic)
+
+instance ToJSON Blind where
+    toJSON (Blind t) = object ["text" .= t]
+
+instance FromJSON Blind where
+    parseJSON (Object v) = Blind <$> v .: "text"
+    parseJSON invalid = typeMismatch "Blind" invalid
+
+blind :: MCQMarkup mckind Choice -> MCQMarkup mckind Blind
+blind MCM{..} = MCM{choices=map hide choices,..}
+
+hide :: Choice -> Blind
+hide choice = Blind (text choice) -- Blind . text
+
+data SemiBlind = Blinded Blind | Open Choice deriving (Show,Generic)
+-- (a,b) = foo()
+instance ToJSON SemiBlind where
+    toJSON (Open c) = toJSON c
+    toJSON (Blinded b) = toJSON b
+
+blindSemi :: MCQMarkup a Choice -> [Bool] -> MCQMarkup a SemiBlind
+blindSemi MCM{..} toHide = MCM{choices=[if h then Blinded (hide c) else Open c | h <- toHide | c <- choices],..}
 
 
 mdOpts = def{writerHTMLMathMethod=MathJax
@@ -106,12 +108,24 @@ instance Typesettable (SemiBlind) where
   typeset (Blinded a) = Blinded (typeset a)
 
 
-countChoices :: (MCQMarkup mmc α) -> [Maybe Bool] -> Integer
-countChoices MCM {..} es = fromIntegral (length choices)
+countChoices :: (MCQMarkup mmc Choice) -> Integer
+countChoices MCM {..} =
+  fromIntegral
+    (length
+       [ ()
+       | c <- choices 
+       , isJust (correct c) 
+       ])
 
 countSuccessSingle :: (MCQMarkup mmc Choice) -> SMCAnswer -> Integer
-countSuccessSingle _       Blank  = 0 
-countSuccessSingle MCM{..} answer = fromIntegral $ length [() | (n,c) <- zip [0..] choices, Selection n == answer, correct c ]
+countSuccessSingle _ Blank = 0
+countSuccessSingle MCM {..} answer =
+  fromIntegral $
+  length
+    [ ()
+    | (n, c) <- zip [0 ..] choices 
+    , Selection n == answer 
+    , correct c == Just True ]
 
 countSuccess :: (MCQMarkup mmc Choice) -> [Maybe Bool] -> Integer
 countSuccess MCM {..} es =
@@ -119,14 +133,14 @@ countSuccess MCM {..} es =
   length
     [ ()
     | (Just a, c) <- zip es choices 
-    , a == correct c ]
+    , Just a == correct c ]
 
 countSuccessSemi :: (MCQMarkup mmc SemiBlind) -> [Maybe Bool] -> Integer
-countSuccessSemi MCM{..} es = fromIntegral $ length [()|(Just a,c) <- zip es choices, Just a==isCorrect c]
+countSuccessSemi MCM{..} es = fromIntegral $ length [()|(Just a,c) <- zip es choices, Just a==choiceIsCorrect c]
 
-isCorrect :: SemiBlind -> Maybe Bool
-isCorrect (Open c) = Just (correct c)
-isCorrect (Blinded _) = Nothing
+choiceIsCorrect :: SemiBlind -> Maybe Bool
+choiceIsCorrect (Open c)    = correct c
+choiceIsCorrect (Blinded _) = Nothing
 
 
 multipleMultipleChoice :: Plugin (Markup (MCQMarkup MMC Choice), State (Maybe [Maybe Bool])) 
@@ -152,7 +166,7 @@ multipleMultipleChoice =
                    [ "vars" .=
                      object
                          [ "correct" .= countSuccess mcm i
-                         , "count"   .= countChoices mcm i]
+                         , "count"   .= countChoices mcm]
                    , "points" .= countSuccess mcm i])
         , BlackboardOut (catMaybes [fmap Put (onTry mcm), Just (Put taskID)]))
     render (Markup mcm, State state) =
@@ -209,7 +223,7 @@ simpleMultipleChoice =
     render (Markup mcm, State state) =
       return $
       case state of
-        Selection i -> traceShow ("STATE",state) $ 
+        Selection i -> 
           ngDirective "mcq" $
           object ["question" .= typeset mcm, "state" .= state]
         Blank -> traceShow ("NoState!")

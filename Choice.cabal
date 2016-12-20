@@ -15,11 +15,33 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
+Library 
+  exposed-modules: Choices
+  ghc-options:
+  build-depends:       base >=4.6
+      , PluginConstructionKit >= 0.1
+      , pandoc >= 1.12
+      , text >=1.1
+      , blaze-html >= 0.7
+      , bytestring >=0.10
+      , aeson >=0.7
+      , mtl >=2.1
+      , template >= 0.2
+      , snap-core >=0.9
+      , snap-server >=0.9
+      , containers >= 0.5
+      , unordered-containers >= 0.2.4
+      , directory >= 1.2
+      , either >= 4.3
+      , hashable >= 1.2
+      , html-entities >= 1.1
+      , filepath >= 1.3
+  default-language:    Haskell2010
 
 executable MultipleChoicesPlugin
   main-is:            MultipleChoicesPlugin.hs
   other-modules: Choices
-  ghc-options: -dynamic
+  ghc-options:
   build-depends:       base >=4.6
       , PluginConstructionKit >= 0.1
       , pandoc >= 1.12

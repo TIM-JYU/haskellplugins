@@ -4,8 +4,11 @@ angular.module('MCQ', [])
                     $scope.active  = false;
                     $scope.checked = true;
                     $scope.headertext  = "Check your understanding";
-                    if ($scope.content.question.headertext !== null)
-                        $scope.headertext  = $scope.content.question.headertext;
+                    $scope.buttonText  = "Submit";
+                    if ($scope.content.question.headerText !== null)
+                        $scope.headertext  = $scope.content.question.headerText;
+                    if ($scope.content.question.buttonText !== null)
+                        $scope.buttonText  = $scope.content.question.buttonText;
                             
                     $scope.answer = $scope.content.state; 
                     if ($scope.answer==null||$scope.answer==undefined) 
@@ -27,8 +30,12 @@ angular.module('MCQ', [])
     , function($scope){
         $scope.headertext  = "Check your understanding";
         console.log(["MCQ content",$scope.content]);
-        if ($scope.content.question.headertext !== null)
-            $scope.headertext  = $scope.content.question.headertext;
+        $scope.headertext  = "Check your understanding";
+        $scope.buttonText  = "Submit";
+        if ($scope.content.question.headerText !== null)
+            $scope.headerText  = $scope.content.question.headerText;
+        if ($scope.content.question.buttonText !== null)
+            $scope.buttonText  = $scope.content.question.buttonText;
         return;}
     , function(scope){return parseInt(scope.userSelection);}));
 

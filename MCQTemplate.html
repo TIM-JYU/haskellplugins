@@ -1,5 +1,5 @@
 <div class="mcq">
-    <span class="header" style="font-weight:bold"ng-bind-html="content.question.headerText"></span><br>
+    <span class="header" style="font-weight:bold"ng-bind-html="headerText"></span><br>
     <span ng-bind-html="content.question.stem"></span>
     <table>
      <tr ng-repeat="choice in content.question.choices">
@@ -12,5 +12,5 @@
           <span ng-if="choice.reason" class="MCQExpl" ng-bind-html="choice.reason"></span></td>
      </tr>
     </table>
-     <button ng-click="submit()">Check</button>
+     <button ng-click="submit()" ng-bind-html="buttonText"></button>
 </div>

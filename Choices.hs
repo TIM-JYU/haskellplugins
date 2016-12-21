@@ -25,6 +25,7 @@ data MCQMarkup mckind choice
           ,choices :: [choice]
           ,onTry   :: Maybe T.Text
           ,headerText  :: Maybe T.Text
+          ,buttonText  :: Maybe T.Text
           } 
       deriving (Show,Generic)
 
@@ -94,6 +95,7 @@ instance Typesettable a =>
     { stem = formatMarkdown stem
     , headerText = fmap formatMarkdown headerText
     , choices = map typeset choices
+    , buttonText = fmap formatMarkdown buttonText
     , ..
     }
 

@@ -14,6 +14,7 @@ import Text.Pandoc
 import qualified Text.Blaze.Html
 import Text.Blaze.Html.Renderer.Text
 import Debug.Trace
+import Control.Applicative((<|>))
 
 import PluginType
 
@@ -26,6 +27,8 @@ data MCQMarkup mckind choice
           ,onTry   :: Maybe T.Text
           ,headerText  :: Maybe T.Text
           ,buttonText  :: Maybe T.Text
+          ,button :: Maybe T.Text
+          ,header :: Maybe T.Text
           } 
       deriving (Show,Generic)
 
@@ -93,9 +96,9 @@ instance Typesettable a =>
   typeset MCM {..} =
     MCM
     { stem = formatMarkdown stem
-    , headerText = fmap formatMarkdown headerText
+    , headerText = fmap formatMarkdown (headerText <|> header)
     , choices = map typeset choices
-    , buttonText = fmap formatMarkdown buttonText
+    , buttonText = fmap formatMarkdown (buttonText <|> button)
     , ..
     }
 

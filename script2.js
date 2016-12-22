@@ -3,10 +3,10 @@ angular.module('MCQ', [])
                      , function($scope){
                     $scope.active  = false;
                     $scope.checked = true;
-                    $scope.headertext  = "Check your understanding";
+                    $scope.headerText  = "Check your understanding";
                     $scope.buttonText  = "Submit";
                     if ($scope.content.question.headerText !== null)
-                        $scope.headertext  = $scope.content.question.headerText;
+                        $scope.headerText  = $scope.content.question.headerText;
                     if ($scope.content.question.buttonText !== null)
                         $scope.buttonText  = $scope.content.question.buttonText;
                             
@@ -28,9 +28,9 @@ angular.module('MCQ', [])
                     })) //TODO: cleanup
   .directive('mcq', standardDirective("MCQTemplate.html"
     , function($scope){
-        $scope.headertext  = "Check your understanding";
+        $scope.headerText  = "Check your understanding";
         console.log(["MCQ content",$scope.content]);
-        $scope.headertext  = "Check your understanding";
+        $scope.headerText  = "Check your understanding";
         $scope.buttonText  = "Submit";
         if ($scope.content.question.headerText !== null)
             $scope.headerText  = $scope.content.question.headerText;

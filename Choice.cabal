@@ -20,7 +20,7 @@ Library
   ghc-options:
   build-depends:       base >=4.6
       , PluginConstructionKit >= 0.1
-      , pandoc >= 1.12
+      , pandoc >= 1.19
       , text >=1.1
       , blaze-html >= 0.7
       , bytestring >=0.10
@@ -44,7 +44,7 @@ executable MultipleChoicesPlugin
   ghc-options:
   build-depends:       base >=4.6
       , PluginConstructionKit >= 0.1
-      , pandoc >= 1.12
+      , pandoc >= 1.19
       , text >=1.1
       , blaze-html >= 0.7
       , bytestring >=0.10
@@ -67,7 +67,7 @@ executable ChoicesPlugin
   other-modules: Choices
   build-depends:       base >=4.6
       , PluginConstructionKit >= 0.1
-      , pandoc >= 1.12
+      , pandoc >= 1.19
       , text >=1.1
       , blaze-html >= 0.7
       , bytestring >=0.10

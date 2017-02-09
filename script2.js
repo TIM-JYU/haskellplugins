@@ -5,13 +5,17 @@ angular.module('MCQ', [])
                     $scope.checked = true;
                     $scope.headerText  = "Check your understanding";
                     $scope.buttonText  = "Submit";
-                    if ($scope.content.question.headerText !== null)
-                        $scope.headerText  = $scope.content.question.headerText;
-                    if ($scope.content.question.buttonText !== null)
-                        $scope.buttonText  = $scope.content.question.buttonText;
-                            
-                    $scope.answer = $scope.content.state; 
-                    if ($scope.answer==null||$scope.answer==undefined) 
+                    $scope.trueText  = "True";
+                    $scope.falseText  = "False";
+                    $scope.correctText  = "Correct!";
+                    $scope.wrongText  = "Wrong!";
+                    ['headerText', 'buttonText', 'falseText', 'trueText', 'correctText', 'wrongText'].forEach(function(opt){
+                        if ($scope.content.question[opt] !== null) {
+                            $scope[opt] = $scope.content.question[opt];
+                        }
+                    });
+                    $scope.answer = $scope.content.state;
+                    if ($scope.answer==null||$scope.answer==undefined)
                         {
                         $scope.checked = false;
                         $scope.active  = true;
@@ -29,13 +33,12 @@ angular.module('MCQ', [])
   .directive('mcq', standardDirective("MCQTemplate.html"
     , function($scope){
         $scope.headerText  = "Check your understanding";
-        console.log(["MCQ content",$scope.content]);
-        $scope.headerText  = "Check your understanding";
         $scope.buttonText  = "Submit";
-        if ($scope.content.question.headerText !== null)
-            $scope.headerText  = $scope.content.question.headerText;
-        if ($scope.content.question.buttonText !== null)
-            $scope.buttonText  = $scope.content.question.buttonText;
+        ['headerText', 'buttonText'].forEach(function(opt){
+            if ($scope.content.question[opt] !== null) {
+                $scope[opt] = $scope.content.question[opt];
+            }
+        });
         return;}
     , function(scope){return parseInt(scope.userSelection);}));
 

@@ -29,6 +29,10 @@ data MCQMarkup mckind choice
           ,buttonText  :: Maybe T.Text
           ,button :: Maybe T.Text
           ,header :: Maybe T.Text
+          ,falseText :: Maybe T.Text
+          ,trueText :: Maybe T.Text
+          ,correctText :: Maybe T.Text
+          ,wrongText :: Maybe T.Text
           } 
       deriving (Show,Generic)
 
@@ -74,19 +78,20 @@ blindSemi :: MCQMarkup a Choice -> [Bool] -> MCQMarkup a SemiBlind
 blindSemi MCM{..} toHide = MCM{choices=[if h then Blinded (hide c) else Open c | h <- toHide | c <- choices],..}
 
 
+stripP :: T.Text -> T.Text
+stripP = stripSome T.stripSuffix "</p>" . stripSome T.stripPrefix "<p>"
+ where stripSome f piece str = case f piece str of
+                                 Nothing -> str
+                                 Just s -> s
+
 mdOpts = def{writerHTMLMathMethod=MathJax
               "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"}
 formatMarkdown :: T.Text -> T.Text
-#if MIN_VERSION_pandoc(1,4,0)
 formatMarkdown =
     either
-        (LT.toStrict . renderHtml . Text.Blaze.Html.toHtml . show)
-        (LT.toStrict . renderHtml . writeHtml mdOpts) .
+        (stripP . LT.toStrict . renderHtml . Text.Blaze.Html.toHtml . show)
+        (stripP . LT.toStrict . renderHtml . writeHtml mdOpts) .
     readMarkdown def . T.unpack
-#else
-formatMarkdown =
-    LT.toStrict . renderHtml . writeHtml mdOpts . readMarkdown def . T.unpack
-#endif
 
 class Typesettable a where
    typeset :: a -> a
@@ -99,6 +104,10 @@ instance Typesettable a =>
     , headerText = fmap formatMarkdown (headerText <|> header)
     , choices = map typeset choices
     , buttonText = fmap formatMarkdown (buttonText <|> button)
+    , falseText = fmap formatMarkdown falseText
+    , trueText = fmap formatMarkdown trueText
+    , correctText = fmap formatMarkdown correctText
+    , wrongText = fmap formatMarkdown wrongText
     , ..
     }
 

@@ -1,6 +1,6 @@
 <div class="mcq">
-    <span class="header" style="font-weight:bold"ng-bind-html="headerText"></span><br>
-    <span ng-bind-html="content.question.stem"></span>
+    <p class="header" style="font-weight:bold" ng-bind-html="headerText"></p>
+    <p class="stem" ng-bind-html="content.question.stem"></p>
     <table>
      <tr ng-repeat="choice in content.question.choices">
       <td>

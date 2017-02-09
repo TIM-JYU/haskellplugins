@@ -1,11 +1,11 @@
 <div class="mcq">
-    <span class="header" style="font-weight:bold" ng-bind-html="headerText"></span><br>
-    <span ng-bind-html="content.question.stem"></span>
+    <p class="header" style="font-weight:bold" ng-bind-html="headerText"></p>
+    <p class="stem" ng-bind-html="content.question.stem"></p>
     <table>
         <tr>
             <th style="text-wrap:suppress"></th>
-            <th>True</th>
-            <th>False</th>
+            <th ng-bind-html="trueText"></th>
+            <th ng-bind-html="falseText"></th>
             <th ng-if="checked"></th>
             <th ng-if="checked"></th></tr>
      <tr ng-repeat="choice in content.question.choices">
@@ -18,8 +18,8 @@
         <!-- <input  type="checkbox" ng-model="$parent.answer[$index]" ng-value="false"  />  -->
       </td>
       <td ng-if="checked">
-        <span ng-if="!(answer[$index] == null) && !(choice.correct == null) && (''+answer[$index] == ''+choice.correct)" class="correct">Correct!</span>
-        <span ng-if="!(answer[$index] == null) && !(choice.correct == null) && (''+answer[$index] !==''+choice.correct)" class="wrong">Wrong!</span>
+        <span ng-bind-html="correctText" ng-if="!(answer[$index] == null) && !(choice.correct == null) && (''+answer[$index] == ''+choice.correct)" class="correct"></span>
+        <span ng-bind-html="wrongText" ng-if="!(answer[$index] == null) && !(choice.correct == null) && (''+answer[$index] !==''+choice.correct)" class="wrong"></span>
       </td>
       <td  ng-if="choice.reason" >
         <span class="MCQExpl" ng-bind-html="choice.reason"></span></td>

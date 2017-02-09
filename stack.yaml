@@ -1,9 +1,14 @@
 flags: {}
 packages:
 - '.'
--  location:
+- location:
     git: git://yousource.it.jyu.fi/ties343-funktio-ohjelmointi/PluginConstructionKit.git
-    commit: 007b6985d4adccf8b5d8c9b28c7553bab087d090 
-
-extra-deps: ["html-entities-1.1.2"]
+    commit: 007b6985d4adccf8b5d8c9b28c7553bab087d090
+extra-deps:
+- doctemplates-0.1.0.2
+- html-entities-1.1.2
+- pandoc-1.19.2.1
+- pandoc-types-1.17.0.5
+- skylighting-0.1.1.5
+- texmath-0.9.1
 resolver: lts-7.14

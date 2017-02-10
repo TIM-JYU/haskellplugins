@@ -10,10 +10,10 @@
             <th ng-if="checked"></th></tr>
      <tr ng-repeat="choice in content.question.choices">
       <td><span style="" class="MCQItem" ng-bind-html="choice.text"></span></td>
-      <td >
-        <input  type="checkbox" ng-model="$parent.answer[$index]" ng-true-value="true" ng-false-value"false"/>
+      <td class="text-center">
+        <input  type="checkbox" ng-model="$parent.answer[$index]" ng-true-value="true" ng-false-value="false"/>
       </td>
-      <td >
+      <td class="text-center">
         <input  type="checkbox" ng-model="$parent.answer[$index]" ng-false-value="true" ng-true-value="false" />
         <!-- <input  type="checkbox" ng-model="$parent.answer[$index]" ng-value="false"  />  -->
       </td>
@@ -25,5 +25,7 @@
         <span class="MCQExpl" ng-bind-html="choice.reason"></span></td>
      </tr>
     </table>
-    <button  ng-click="submit()" ng-bind-html="buttonText"></button>
+    <div class="text-center">
+        <button ng-click="submit()" ng-bind-html="buttonText"></button>
+    </div>
 </div>

@@ -26,7 +26,7 @@ function standardDirective(template,build,extract) {
                   $scope.checked = true; 			
                  })
              .error(function(data,status,hdrs,cfg){
-                  alert(["error",data,status,hdrs,cfg]);
+
                  });
             };
        }

@@ -1,4 +1,5 @@
-function standardDirective(template,build,extract) {
+define(["require", "exports", "angular"], function (require, exports, angular) {
+return function (template,build,extract) {
  return function($sce) {
     return {
       restrict: 'E',
@@ -33,3 +34,4 @@ function standardDirective(template,build,extract) {
     }
   }
 }
+});

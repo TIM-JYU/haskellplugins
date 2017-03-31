@@ -1,3 +1,4 @@
+define(["require", "exports", "angular", "./SimpleDirective.js"], function (require, exports, angular, standardDirective) {
 angular.module('MCQ', [])
   .directive('mmcq', standardDirective("MMCQTemplate.html"
                      , function($scope){
@@ -49,3 +50,4 @@ function toBool(lst) {
        else if (lst[i] === "false") {l[i]=false;}
        else {l[i]=null;}
 }
+});

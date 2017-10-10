@@ -39,7 +39,7 @@ graphViz = Plugin{..}
     inFig markup gvOutput = "<div class='figure graphviz "<>LT.pack (show (size markup))<>"'>"<>LT.pack gvOutput<>"</div>"
                                 
 main :: IO ()
-main = quickHttpServe $ serve graphViz
+main = quickHttpServe $ serve "." graphViz
 
 testGraph :: GVMarkup 
 testGraph = GV "dot" Normal

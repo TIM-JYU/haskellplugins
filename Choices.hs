@@ -85,7 +85,7 @@ stripP = stripSome T.stripSuffix "</p>" . stripSome T.stripPrefix "<p>"
                                  Just s -> s
 
 mdOpts = def{writerHTMLMathMethod=MathJax
-              "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"}
+              "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"}
 formatMarkdown :: T.Text -> T.Text
 formatMarkdown =
     either

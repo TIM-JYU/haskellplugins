@@ -1,4 +1,5 @@
 define(["require", "exports", "angular", "./SimpleDirective.js"], function (require, exports, angular, standardDirective) {
+    exports.moduleNames = ["MCQ"];
 angular.module('MCQ', [])
   .directive('mmcq', standardDirective("MMCQTemplate.html"
                      , function($scope){

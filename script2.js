@@ -29,7 +29,7 @@ define(["require", "exports", "angular", "./SimpleDirective.js"], function (requ
                 }
                 scope.active = false;
                 return scope.answer;
-            })) //TODO: cleanup
+            }, 'mmcq')) //TODO: cleanup
         .directive('mcq', standardDirective("MCQTemplate.html"
             , function ($scope) {
                 $scope.headerText = "Check your understanding";
@@ -42,7 +42,7 @@ define(["require", "exports", "angular", "./SimpleDirective.js"], function (requ
             }
             , function (scope) {
                 return parseInt(scope.userSelection);
-            }));
+            }, 'mcq'));
 
     function toBool(lst) {
         var l = new Array(lst.length);

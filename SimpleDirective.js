@@ -6,7 +6,6 @@ define(["require", "exports", "angular"], function (require, exports, angular) {
                 templateUrl: function (elem, attrs) {
                     return '/' + pluginType + "/" + template;
                 },
-                replace: true,
                 scope: {},
                 controller: function ($scope, $element, $http) {
                     $scope.content = JSON.parse($element.attr("data-content"));

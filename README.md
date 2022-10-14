@@ -4,6 +4,9 @@ A collection of TIM plugins written in Haskell:
 
 * Choices: A plugin for simple multiple choice questions
 * MultipleChoices: A plugin for stacked multiple choice questions
+
+Also available plugins (not built by default):
+
 * GraphViz: A plugin for rendering diagrams with GraphViz
 * ShortNotePlugin: A plugin for open answer questions and for writing notes
 

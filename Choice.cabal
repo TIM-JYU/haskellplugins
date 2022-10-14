@@ -84,24 +84,3 @@ executable ChoicesPlugin
       , html-entities >= 1.1
       , filepath >= 1.3
   default-language:    Haskell2010
-
-executable GraphVizPlugin
-  main-is:            GraphVizPlugin.hs
-  build-depends:       base >=4.6
-      , PluginConstructionKit >= 0.1
-      , text >=1.1
-      , bytestring >=0.10
-      , aeson >=0.7
-      , mtl >=2.1
-      , template >= 0.2
-      , snap-core >=0.9
-      , snap-server >=0.9
-      , containers >= 0.5
-      , unordered-containers >= 0.2.4
-      , directory >= 1.2
-      , either >= 4.3
-      , hashable >= 1.2
-      , html-entities >= 1.1
-      , filepath >= 1.3
-      , process >= 1.1
-  default-language:    Haskell2010

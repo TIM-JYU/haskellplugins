@@ -100,7 +100,7 @@ execBBC hm (Delete t) = HashSet.delete t hm
 
 ngDirective :: ToJSON a => LT.Text -> a -> LT.Text
 ngDirective tag content = LT.toLazyText $ 
-                             "<"<>LT.fromLazyText tag<>" data-content='"
+                             "<"<>LT.fromLazyText tag<>" json='"
                              <>text (LT.toStrict . LT.decodeUtf8 . encode $ content)
                              <>"'></"<>LT.fromLazyText tag<>">"
 

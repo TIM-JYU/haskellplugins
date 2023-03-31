@@ -25,8 +25,8 @@ do
     shift
 done
 
-tag_base="timimages/haskellplugins"
-tag=${tag:-latest-gh}
+tag_base="ghcr.io/tim-jyu/haskellplugins"
+tag=${tag:-latest}
 current_commit=$(git rev-parse HEAD)
 current_commit_date=$(git show -s --format=%cd --date=format:%Y-%m-%d HEAD)
 
